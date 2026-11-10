@@ -36,6 +36,14 @@ try:
 except ImportError:
     pdfplumber = None
 
+try:
+    from dashboard_generator import build_standalone_dashboard
+except ImportError:
+    try:
+        from scripts.dashboard_generator import build_standalone_dashboard
+    except ImportError:
+        build_standalone_dashboard = None
+
 VAULT_DIR = Path(os.environ.get("BAODAN_VAULT_DIR", "/Users/clawbot/AI/baodan/baodan"))
 SYSTEM_DIR = VAULT_DIR / "_system"
 CONFIG_FILE = SYSTEM_DIR / "config.json"
@@ -919,12 +927,21 @@ kanban-plugin: basic
         f.write(kanban_content)
     print("✅ 看板中心与多维统计图已完成动态同步！")
 
+    # 自动编译独立离线 Web 看板 (baodan_dashboard.html)
+    if build_standalone_dashboard:
+        try:
+            build_standalone_dashboard(VAULT_DIR)
+        except Exception as e:
+            print(f"⚠️ 生成独立 Web 看板失败: {e}")
+
 def main():
     global VAULT_DIR, SYSTEM_DIR, CONFIG_FILE, MAPPING_FILE, PDF_DIR, OUTPUT_BASE, CATEGORY_DIRS
     parser = argparse.ArgumentParser(description="保单轻量规则脱敏与 Obsidian 沉淀引擎 (v4.0 - 套件聚合高精版)")
     parser.add_argument("pdf", nargs="?", help="要处理的保单 PDF 路径")
     parser.add_argument("--batch", action="store_true", help="批量扫描 02_原始保单_PDF 下的所有保单套件")
     parser.add_argument("--no-ai", action="store_true", help="跳过 DeepSeek AI 自动分析")
+    parser.add_argument("--html", action="store_true", help="一键生成独立离线 Web 看板 (baodan_dashboard.html)")
+    parser.add_argument("--open", action="store_true", help="生成后在默认浏览器中自动打开 Web 看板")
     parser.add_argument("--vault", help="指定 Obsidian 保单仓库根目录路径 (默认取环境变量 BAODAN_VAULT_DIR 或本机预设路径)")
     args = parser.parse_args()
 
@@ -947,12 +964,31 @@ def main():
         for d in CATEGORY_DIRS.values():
             os.makedirs(d, exist_ok=True)
 
+    # 如果仅要求生成/查看 Web 看板
+    if args.html and not args.batch and not args.pdf:
+        clean_redundant_notes()
+        update_kanban_board()
+        html_file = VAULT_DIR / "baodan_dashboard.html"
+        if args.open and html_file.exists():
+            if sys.platform == "darwin":
+                os.system(f'open "{html_file}"')
+            elif sys.platform.startswith("linux"):
+                os.system(f'xdg-open "{html_file}"')
+        return
+
     # 清理历史冗余笔记
     clean_redundant_notes()
 
     suites = scan_and_bundle_suites()
     if not suites:
         print(f"ℹ️ 目录 {PDF_DIR} 下暂无可处理的 PDF 文件。")
+        update_kanban_board()
+        html_file = VAULT_DIR / "baodan_dashboard.html"
+        if args.open and html_file.exists():
+            if sys.platform == "darwin":
+                os.system(f'open "{html_file}"')
+            elif sys.platform.startswith("linux"):
+                os.system(f'xdg-open "{html_file}"')
         return
 
     print(f"🚀 检测到 {len(suites)} 个保单套件，准备进行聚合处理...")
@@ -960,6 +996,13 @@ def main():
         process_suite(s["master"], s["clause"], s["value_added"], skip_ai=args.no_ai)
 
     update_kanban_board()
+
+    html_file = VAULT_DIR / "baodan_dashboard.html"
+    if args.open and html_file.exists():
+        if sys.platform == "darwin":
+            os.system(f'open "{html_file}"')
+        elif sys.platform.startswith("linux"):
+            os.system(f'xdg-open "{html_file}"')
 
 if __name__ == "__main__":
     main()

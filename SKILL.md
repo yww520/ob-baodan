@@ -93,6 +93,11 @@ description: 全家保单数字化管理与本地隐私绝对脱敏流水线（�
 - **模式 A（笔记内置就地追问）**：在笔记内的 `baodan-ai` 卡片中直接点击常用胶囊（如“小孩肺炎花8000能赔多少”或“特需部赔不赔”），实时展开计算步骤，支持一键点击 `📌 保存问答至保单笔记末尾`；
 - **模式 B（独立侧边栏对话）**：点击左侧 Ribbon 图标或快捷键 `Cmd+P` 选择 `打开保单智能追问对话面板`，展开多轮连贯交互。
 
+### 阶段 6：零依赖独立离线 Web 看板自动编译 (Standalone Web Dashboard)
+- 每次解析或执行更新时，自动在保单库根目录编译单个纯静态、自包含的 **`baodan_dashboard.html`**；
+- **无需安装 Obsidian 或任何第三方软件**，双击即可在任何浏览器（Chrome / Safari / Edge / 手机平板）中打开；
+- 具备完整的泳道看板、SVG 交互式环形图与柱状图、60天临近续期扣费预警、保单搜索筛选与右侧滑出式 AI 条款精读抽屉。
+
 ---
 
 ## 💻 常用执行命令
@@ -107,6 +112,9 @@ python3 scripts/policy_processor.py "/path/to/policy.pdf" --vault "/path/to/your
 # 3. 离线模式处理（仅脱敏排版，不调用 AI）
 python3 scripts/policy_processor.py --batch --no-ai
 
-# 4. 重新构建并安装 Obsidian 插件
+# 4. 一键生成并直接在浏览器中打开独立 Web 看板（无需 Obsidian）
+python3 scripts/policy_processor.py --html --open --vault "/path/to/your/obsidian/vault"
+
+# 5. 重新构建并安装 Obsidian 插件
 cd plugin && npm run build
 ```

@@ -1,0 +1,1498 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+ob-baodan 独立离线 Web 看板生成器 (Standalone Web Dashboard Generator)
+功能：
+1. 遍历 Obsidian 保单仓库 (01_保单库) 中的全部保单笔记；
+2. 提取 Frontmatter 元数据、责任明细、DeepSeek AI 精读报告与理赔规则；
+3. 编译生成自包含、零外部依赖、响应式的现代化 HTML 单文件看板 (baodan_dashboard.html)；
+4. 无需安装 Obsidian，双击即可在任何浏览器（Chrome/Safari/Edge/移动端）中打开浏览。
+"""
+
+import os
+import sys
+import re
+import json
+import math
+import yaml
+from pathlib import Path
+from datetime import datetime
+
+def parse_markdown_policy(file_path):
+    """解析单个保单 Markdown 文件，提取元数据与正文模块"""
+    try:
+        content = file_path.read_text(encoding="utf-8")
+    except Exception as e:
+        return None
+
+    if not content.startswith("---"):
+        return None
+
+    parts = content.split("---", 2)
+    if len(parts) < 3:
+        return None
+
+    try:
+        meta = yaml.safe_load(parts[1])
+    except Exception:
+        return None
+
+    if not meta or not isinstance(meta, dict):
+        return None
+
+    body = parts[2].strip()
+
+    # 提取概览
+    overview = ""
+    ov_match = re.search(r'> \[!NOTE\] 快速概览\n(.*?)(?=\n---|\n##|\Z)', body, re.S)
+    if ov_match:
+        overview = ov_match.group(1).strip()
+
+    # 提取大模型精读区
+    ai_section = ""
+    ai_match = re.search(r'## 🤖 2\. (?:大模型条款深度梳理|大模型深度条款梳理区).*?\n(.*?)(?=\n<details|\n##|\Z)', body, re.S)
+    if ai_match:
+        ai_section = ai_match.group(1).strip()
+
+    # 提取责任明细表
+    benefits_table = ""
+    table_match = re.search(r'### 💰 保障责任分项明细\n(.*?)(?=\n---|\n##|\Z)', body, re.S)
+    if table_match:
+        benefits_table = table_match.group(1).strip()
+
+    # 提取人员信息表
+    persons_table = ""
+    p_match = re.search(r'### 👤 人员信息结构化核验表\n(.*?)(?=\n---|\n##|\n###|\Z)', body, re.S)
+    if p_match:
+        persons_table = p_match.group(1).strip()
+
+    sum_ins = float(meta.get("sum_insured", 0) or 0)
+    ann_prem = float(meta.get("annual_premium", 0) or 0)
+    leverage = round(sum_ins / ann_prem, 1) if ann_prem > 0 else 0
+
+    return {
+        "id": file_path.stem,
+        "filename": file_path.name,
+        "relative_path": str(file_path.name),
+        "product_name": meta.get("product_name", file_path.stem),
+        "insurer": meta.get("insurer", "未知保险公司"),
+        "category": meta.get("category", "综合险"),
+        "status": meta.get("status", "保障中"),
+        "sum_insured": sum_ins,
+        "sum_insured_text": f"{sum_ins/10000:.1f} 万元" if sum_ins >= 10000 else f"{sum_ins:.0f} 元",
+        "annual_premium": ann_prem,
+        "annual_premium_text": f"￥{ann_prem:,.2f}",
+        "leverage": leverage,
+        "payment_period": meta.get("payment_period", "1年交"),
+        "coverage_period": meta.get("coverage_period", "1年"),
+        "effective_date": str(meta.get("effective_date", "")),
+        "renewal_date": str(meta.get("renewal_date", "01-01")),
+        "next_payment": str(meta.get("next_payment", "")),
+        "policyholder": meta.get("policyholder", "未填"),
+        "insured": meta.get("insured", "未填"),
+        "relationship": meta.get("relationship", "本人"),
+        "overview": overview,
+        "ai_section": ai_section,
+        "benefits_table": benefits_table,
+        "persons_table": persons_table,
+        "raw_body_excerpt": body[:1200]
+    }
+
+def collect_vault_policies(vault_dir):
+    """扫描指定仓库下的所有有效保单笔记"""
+    vault_path = Path(vault_dir)
+    policy_base = vault_path / "01_保单库"
+    if not policy_base.exists():
+        return []
+
+    policies = []
+    for md_file in sorted(policy_base.rglob("*.md")):
+        # 跳过空保单或废弃保单
+        p = parse_markdown_policy(md_file)
+        if p and p["sum_insured"] > 0:
+            policies.append(p)
+    return policies
+
+def build_standalone_dashboard(vault_dir, output_file=None):
+    """生成自包含 HTML 看板文件"""
+    vault_path = Path(vault_dir)
+    if output_file is None:
+        output_file = vault_path / "baodan_dashboard.html"
+    else:
+        output_file = Path(output_file)
+
+    policies = collect_vault_policies(vault_path)
+
+    # 统计数据
+    total_coverage = sum(p["sum_insured"] for p in policies if p["status"] == "保障中")
+    total_premium = sum(p["annual_premium"] for p in policies if p["status"] == "保障中")
+    active_count = sum(1 for p in policies if p["status"] == "保障中")
+    overall_leverage = round(total_coverage / total_premium, 1) if total_premium > 0 else 0
+
+    # 险种分布
+    cat_stats = {}
+    for p in policies:
+        if p["status"] == "保障中":
+            c = p["category"]
+            cat_stats[c] = cat_stats.get(c, {"premium": 0.0, "coverage": 0.0, "count": 0})
+            cat_stats[c]["premium"] += p["annual_premium"]
+            cat_stats[c]["coverage"] += p["sum_insured"]
+            cat_stats[c]["count"] += 1
+
+    # 家庭成员分布
+    member_stats = {}
+    for p in policies:
+        if p["status"] == "保障中":
+            m = p["insured"]
+            rel = p["relationship"]
+            k = f"{m} ({rel})"
+            member_stats[k] = member_stats.get(k, {"premium": 0.0, "coverage": 0.0, "count": 0})
+            member_stats[k]["premium"] += p["annual_premium"]
+            member_stats[k]["coverage"] += p["sum_insured"]
+            member_stats[k]["count"] += 1
+
+    # 12个月现金流
+    monthly_flow = {m: 0.0 for m in range(1, 13)}
+    monthly_policies = {m: [] for m in range(1, 13)}
+    for p in policies:
+        if p["status"] == "保障中":
+            try:
+                m_int = int(str(p["renewal_date"]).split("-")[0])
+                if 1 <= m_int <= 12:
+                    monthly_flow[m_int] += p["annual_premium"]
+                    monthly_policies[m_int].append(p)
+            except Exception:
+                pass
+
+    peak_month = max(monthly_flow.items(), key=lambda x: x[1])[0] if total_premium > 0 else 1
+
+    # 序列化为 JSON 供前端交互驱动
+    payload = {
+        "updatedAt": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "totalCoverage": total_coverage,
+        "totalCoverageText": f"{total_coverage/10000:.1f} 万元" if total_coverage >= 10000 else f"{total_coverage:.0f} 元",
+        "totalPremium": total_premium,
+        "totalPremiumText": f"￥{total_premium:,.2f}",
+        "activeCount": active_count,
+        "overallLeverage": overall_leverage,
+        "categoryStats": cat_stats,
+        "memberStats": member_stats,
+        "monthlyFlow": monthly_flow,
+        "peakMonth": peak_month,
+        "policies": policies
+    }
+    payload_json = json.dumps(payload, ensure_ascii=False)
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🛡️ 家庭保单资产管理看板 - 独立离线全景大盘</title>
+  <style>
+    :root {{
+      --bg-base: #0b0f19;
+      --bg-surface: #111827;
+      --bg-card: rgba(30, 41, 59, 0.7);
+      --bg-card-hover: rgba(51, 65, 85, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(99, 102, 241, 0.3);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-medical: #10b981;
+      --accent-illness: #8b5cf6;
+      --accent-accident: #f59e0b;
+      --accent-life: #3b82f6;
+      --accent-primary: #6366f1;
+      --card-radius: 14px;
+      --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+      --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.4);
+    }}
+
+    [data-theme="light"] {{
+      --bg-base: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f1f5f9;
+      --border-color: #e2e8f0;
+      --border-accent: rgba(99, 102, 241, 0.2);
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.08);
+    }}
+
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding-bottom: 60px;
+      transition: background-color 0.25s, color 0.25s;
+    }}
+
+    .container {{
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }}
+
+    /* 顶部导航 */
+    header {{
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      backdrop-filter: blur(12px);
+    }}
+    .header-inner {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+    }}
+    .brand {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }}
+    .brand-icon {{
+      font-size: 26px;
+      background: linear-gradient(135deg, #10b981, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }}
+    .brand-title {{
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }}
+    .brand-subtitle {{
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-left: 8px;
+      padding: 2px 8px;
+      background: var(--border-color);
+      border-radius: 12px;
+    }}
+    .header-actions {{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }}
+    .btn {{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-main);
+      transition: all 0.2s;
+    }}
+    .btn:hover {{
+      background: var(--bg-card-hover);
+      border-color: var(--accent-primary);
+    }}
+    .btn-primary {{
+      background: #4f46e5;
+      color: #fff;
+      border-color: #4f46e5;
+    }}
+    .btn-primary:hover {{
+      background: #4338ca;
+    }}
+
+    /* KPI 指标卡 */
+    .kpi-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }}
+    .kpi-card {{
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }}
+    .kpi-card::before {{
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #10b981, #6366f1);
+    }}
+    .kpi-header {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 500;
+    }}
+    .kpi-value {{
+      font-size: 28px;
+      font-weight: 800;
+      margin-top: 10px;
+      letter-spacing: -0.5px;
+      color: var(--text-main);
+    }}
+    .kpi-desc {{
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }}
+
+    /* 筛选与视图栏 */
+    .toolbar {{
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding: 14px 18px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+    }}
+    .filter-group {{
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }}
+    .filter-label {{
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-right: 4px;
+    }}
+    .pill {{
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 20px;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }}
+    .pill:hover {{
+      color: var(--text-main);
+      border-color: var(--text-dim);
+    }}
+    .pill.active {{
+      background: var(--accent-primary);
+      color: #fff;
+      border-color: var(--accent-primary);
+    }}
+    .search-box {{
+      position: relative;
+      min-width: 240px;
+    }}
+    .search-input {{
+      width: 100%;
+      padding: 7px 12px 7px 32px;
+      font-size: 13px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-base);
+      color: var(--text-main);
+      outline: none;
+    }}
+    .search-input:focus {{
+      border-color: var(--accent-primary);
+    }}
+    .search-icon {{
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      color: var(--text-dim);
+    }}
+
+    /* 标签页导航 */
+    .view-tabs {{
+      display: flex;
+      gap: 6px;
+      background: var(--bg-base);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+    }}
+    .tab-btn {{
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }}
+    .tab-btn.active {{
+      background: var(--bg-surface);
+      color: var(--text-main);
+      box-shadow: var(--shadow-sm);
+    }}
+
+    /* 视图切换 */
+    .tab-content {{
+      display: none;
+    }}
+    .tab-content.active {{
+      display: block;
+    }}
+
+    /* 泳道看板 (Kanban) */
+    .kanban-board {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      align-items: start;
+    }}
+    .kanban-col {{
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+    }}
+    .kanban-col-header {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }}
+    .col-title {{
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }}
+    .col-badge {{
+      font-size: 12px;
+      background: var(--border-color);
+      padding: 2px 8px;
+      border-radius: 12px;
+      color: var(--text-muted);
+    }}
+    .card-list {{
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }}
+    .policy-card {{
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }}
+    .policy-card:hover {{
+      transform: translateY(-2px);
+      border-color: var(--accent-primary);
+      box-shadow: var(--shadow-lg);
+      background: var(--bg-card-hover);
+    }}
+    .card-top {{
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }}
+    .category-tag {{
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }}
+    .cat-医疗险 {{ background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }}
+    .cat-重疾险 {{ background: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); }}
+    .cat-意外险 {{ background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }}
+    .cat-寿险 {{ background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }}
+    .cat-default {{ background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); }}
+
+    .card-company {{
+      font-size: 11px;
+      color: var(--text-dim);
+    }}
+    .card-title {{
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }}
+    .card-roles {{
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }}
+    .role-badge {{
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }}
+    .card-financials {{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--bg-base);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }}
+    .fin-item-title {{
+      font-size: 11px;
+      color: var(--text-dim);
+    }}
+    .fin-item-val {{
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 2px;
+    }}
+    .fin-item-val.highlight {{
+      color: #10b981;
+    }}
+    .card-footer {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      border-top: 1px solid var(--border-color);
+      padding-top: 10px;
+      margin-top: 6px;
+    }}
+    .action-link {{
+      color: var(--accent-primary);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }}
+
+    /* 图表大盘 (Analytics) */
+    .charts-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 20px;
+    }}
+    .chart-card {{
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+    }}
+    .chart-header {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }}
+    .chart-title {{
+      font-size: 16px;
+      font-weight: 700;
+    }}
+    .chart-subtitle {{
+      font-size: 12px;
+      color: var(--text-muted);
+    }}
+
+    /* SVG 环形图容器 */
+    .donut-container {{
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      gap: 24px;
+    }}
+    .donut-svg {{
+      width: 170px;
+      height: 170px;
+      transform: rotate(-90deg);
+    }}
+    .donut-legend {{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }}
+    .legend-row {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }}
+    .legend-label {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }}
+    .legend-color {{
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }}
+    .legend-val {{
+      font-weight: 700;
+      color: var(--text-main);
+    }}
+
+    /* 12 个月现金流柱状图 */
+    .bar-chart {{
+      display: flex;
+      align-items: flex-end;
+      height: 200px;
+      gap: 12px;
+      padding-top: 30px;
+    }}
+    .bar-col {{
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      position: relative;
+    }}
+    .bar-pillar {{
+      width: 100%;
+      background: linear-gradient(180deg, #6366f1, rgba(99, 102, 241, 0.3));
+      border-radius: 6px 6px 2px 2px;
+      transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      cursor: pointer;
+    }}
+    .bar-pillar:hover {{
+      background: #818cf8;
+    }}
+    .bar-pillar.peak {{
+      background: linear-gradient(180deg, #f59e0b, rgba(245, 158, 11, 0.4));
+    }}
+    .bar-label {{
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }}
+    .bar-tip {{
+      position: absolute;
+      top: -24px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+    }}
+
+    /* 排行榜表格 */
+    .rank-table {{
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }}
+    .rank-table th {{
+      text-align: left;
+      padding: 10px;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 600;
+    }}
+    .rank-table td {{
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border-color);
+    }}
+    .rank-num {{
+      font-weight: 800;
+      font-size: 14px;
+    }}
+    .progress-bar {{
+      height: 6px;
+      background: var(--bg-base);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 4px;
+    }}
+    .progress-fill {{
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #6366f1);
+      border-radius: 3px;
+    }}
+
+    /* 抽屉式侧边栏 (Details Drawer) */
+    .drawer-overlay {{
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }}
+    .drawer-overlay.open {{
+      opacity: 1;
+      pointer-events: auto;
+    }}
+    .drawer {{
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 680px;
+      max-width: 90vw;
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-color);
+      z-index: 101;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+    }}
+    .drawer.open {{
+      transform: translateX(0);
+    }}
+    .drawer-header {{
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }}
+    .drawer-title {{
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.3;
+    }}
+    .drawer-subtitle {{
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }}
+    .drawer-close {{
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }}
+    .drawer-close:hover {{
+      color: var(--text-main);
+      background: var(--border-color);
+    }}
+    .drawer-body {{
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }}
+
+    .drawer-section {{
+      background: var(--bg-base);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+    }}
+    .drawer-section-title {{
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-main);
+    }}
+    .grid-props {{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 13px;
+    }}
+    .prop-row {{
+      display: flex;
+      flex-direction: column;
+    }}
+    .prop-name {{
+      font-size: 11px;
+      color: var(--text-dim);
+    }}
+    .prop-val {{
+      font-weight: 600;
+      color: var(--text-main);
+      margin-top: 2px;
+    }}
+
+    .ai-box {{
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-main);
+      white-space: pre-wrap;
+    }}
+    .ai-box table {{
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 12px;
+    }}
+    .ai-box th, .ai-box td {{
+      border: 1px solid var(--border-color);
+      padding: 6px 10px;
+      text-align: left;
+    }}
+    .ai-box th {{
+      background: rgba(255, 255, 255, 0.04);
+    }}
+
+    /* 打印优化 */
+    @media print {{
+      header, .toolbar, .drawer-overlay, .drawer {{ display: none !important; }}
+      body {{ background: #fff; color: #000; padding: 0; }}
+      .kpi-card, .kanban-col, .chart-card {{ border: 1px solid #ccc; box-shadow: none; }}
+      .tab-content {{ display: block !important; }}
+    }}
+  </style>
+</head>
+<body>
+
+  <!-- 顶部导航 -->
+  <header>
+    <div class="container header-inner">
+      <div class="brand">
+        <span class="brand-icon">🛡️</span>
+        <div>
+          <span class="brand-title">ob-baodan 家庭保单资产管理看板</span>
+          <span class="brand-subtitle">零依赖独立离线 Web 版</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn" onclick="window.print()">🖨️ 打印 / 导出 PDF</button>
+        <button class="btn" id="themeToggleBtn" onclick="toggleTheme()">🌓 亮暗切换</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- KPI 关键指标总览 -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span>全家总保障额度</span>
+          <span>🛡️</span>
+        </div>
+        <div class="kpi-value" id="kpiCoverage">{payload['totalCoverageText']}</div>
+        <div class="kpi-desc">涵盖大额医疗、重疾确诊给付与综合身故伤残</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span>年度总保费支出</span>
+          <span>💳</span>
+        </div>
+        <div class="kpi-value" id="kpiPremium">{payload['totalPremiumText']}</div>
+        <div class="kpi-desc">保障中有效保单每年度需缴纳的保费总和</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span>有效保单份数</span>
+          <span>📑</span>
+        </div>
+        <div class="kpi-value" id="kpiCount">{payload['activeCount']} 份</div>
+        <div class="kpi-desc">已通过本地脱敏聚合的结构化主保单笔记</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span>全家综合保障杠杆</span>
+          <span>📈</span>
+        </div>
+        <div class="kpi-value" id="kpiLeverage">{payload['overallLeverage']} 倍</div>
+        <div class="kpi-desc">总保额 / 年总保费（以小博大的抗风险放大倍数）</div>
+      </div>
+    </section>
+
+    <!-- 筛选、搜索与视图切换工具栏 -->
+    <section class="toolbar">
+      <div class="filter-group">
+        <span class="filter-label">险种过滤:</span>
+        <button class="pill active" onclick="filterCategory('ALL', this)">全部险种</button>
+        <button class="pill" onclick="filterCategory('医疗险', this)">医疗险</button>
+        <button class="pill" onclick="filterCategory('重疾险', this)">重疾险</button>
+        <button class="pill" onclick="filterCategory('意外险', this)">意外险</button>
+        <button class="pill" onclick="filterCategory('寿险', this)">寿险</button>
+      </div>
+
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="搜索保单名称、承保机构、被保人..." oninput="handleSearch()">
+      </div>
+
+      <div class="view-tabs">
+        <button class="tab-btn active" onclick="switchTab('kanbanTab', this)">📋 泳道看板</button>
+        <button class="tab-btn" onclick="switchTab('analyticsTab', this)">📊 数据大盘</button>
+        <button class="tab-btn" onclick="switchTab('calendarTab', this)">📅 缴费日历</button>
+      </div>
+    </section>
+
+    <!-- 视图 1：泳道看板 (Kanban) -->
+    <section id="kanbanTab" class="tab-content active">
+      <div class="kanban-board">
+        <!-- 泳道 1: 缴费保障中 -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <div class="col-title">
+              <span>🛡️ 缴费保障中</span>
+              <span class="col-badge" id="badgeActive">0</span>
+            </div>
+          </div>
+          <div class="card-list" id="cardsActive"></div>
+        </div>
+
+        <!-- 泳道 2: 等待期 / 待生效 -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <div class="col-title">
+              <span>⏳ 等待期 / 待生效</span>
+              <span class="col-badge" id="badgeWaiting">0</span>
+            </div>
+          </div>
+          <div class="card-list" id="cardsWaiting"></div>
+        </div>
+
+        <!-- 泳道 3: 即将续期 / 待缴费 -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <div class="col-title">
+              <span>⏰ 60天内待续费</span>
+              <span class="col-badge" id="badgeUpcoming">0</span>
+            </div>
+          </div>
+          <div class="card-list" id="cardsUpcoming"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 视图 2：数据大盘 (Analytics) -->
+    <section id="analyticsTab" class="tab-content">
+      <div class="charts-grid">
+        <!-- 环形图 1: 家庭成员保费分布 -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">👤 家庭成员保费支出分布</div>
+              <div class="chart-subtitle">家庭顶梁柱与各成员支出权重</div>
+            </div>
+          </div>
+          <div class="donut-container" id="memberDonutContainer"></div>
+        </div>
+
+        <!-- 环形图 2: 险种类型保额分布 -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">🛡️ 险种类型保额覆盖分布</div>
+              <div class="chart-subtitle">医疗/重疾/意外抗风险额度配比</div>
+            </div>
+          </div>
+          <div class="donut-container" id="categoryDonutContainer"></div>
+        </div>
+
+        <!-- 柱状图: 12 个月缴费现金流 -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">📅 12个月扣费现金流峰值 (元)</div>
+              <div class="chart-subtitle">最高扣款峰值月份标黄预警</div>
+            </div>
+          </div>
+          <div class="bar-chart" id="monthlyBarChart"></div>
+        </div>
+
+        <!-- 排行榜: 全家保单杠杆率排行 -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">🏆 全家保单保障杠杆率排行</div>
+              <div class="chart-subtitle">保额 vs 年度保费（以小博大倍数）</div>
+            </div>
+          </div>
+          <table class="rank-table" id="leverageTable">
+            <thead>
+              <tr>
+                <th style="width: 40px;">排名</th>
+                <th>保单名称</th>
+                <th>被保人</th>
+                <th>杠杆倍数</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 视图 3：缴费日历 (Calendar) -->
+    <section id="calendarTab" class="tab-content">
+      <div class="charts-grid" id="calendarGrid"></div>
+    </section>
+  </main>
+
+  <!-- 侧边详情抽屉 (Slide-Over Drawer) -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <aside class="drawer" id="policyDrawer">
+    <div class="drawer-header">
+      <div>
+        <div class="drawer-title" id="drawerTitle">保单详情</div>
+        <div class="drawer-subtitle" id="drawerSubtitle">承保机构 · 险种类型</div>
+      </div>
+      <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <!-- 核心参数卡片 -->
+      <div class="drawer-section">
+        <div class="drawer-section-title">📋 核心合同基本参数</div>
+        <div class="grid-props" id="drawerProps"></div>
+      </div>
+
+      <!-- DeepSeek AI 精读区 -->
+      <div class="drawer-section">
+        <div class="drawer-section-title">🤖 DeepSeek AI 专家精读与排雷</div>
+        <div class="ai-box" id="drawerAi"></div>
+      </div>
+
+      <!-- 责任明细 -->
+      <div class="drawer-section" id="drawerBenefitsSection">
+        <div class="drawer-section-title">💰 保障责任分项与阶梯赔付规则</div>
+        <div class="ai-box" id="drawerBenefits"></div>
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    // 注入全部保单结构化数据
+    window.BAODAN_DATA = {payload_json};
+
+    let currentCategoryFilter = 'ALL';
+    let currentSearchTerm = '';
+
+    // 初始化渲染
+    document.addEventListener('DOMContentLoaded', () => {{
+      renderKanban();
+      renderAnalytics();
+      renderCalendar();
+    }});
+
+    // 亮暗主题切换
+    function toggleTheme() {{
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('baodan_theme', next);
+    }}
+
+    // 标签页切换
+    function switchTab(tabId, btn) {{
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }}
+
+    // 险种过滤
+    function filterCategory(cat, btn) {{
+      document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      currentCategoryFilter = cat;
+      renderKanban();
+    }}
+
+    // 搜索过滤
+    function handleSearch() {{
+      currentSearchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+      renderKanban();
+    }}
+
+    function getFilteredPolicies() {{
+      return window.BAODAN_DATA.policies.filter(p => {{
+        const matchCat = (currentCategoryFilter === 'ALL' || p.category.includes(currentCategoryFilter));
+        const matchSearch = (!currentSearchTerm || 
+          p.product_name.toLowerCase().includes(currentSearchTerm) ||
+          p.insurer.toLowerCase().includes(currentSearchTerm) ||
+          p.insured.toLowerCase().includes(currentSearchTerm) ||
+          p.policyholder.toLowerCase().includes(currentSearchTerm)
+        );
+        return matchCat && matchSearch;
+      }});
+    }}
+
+    // 渲染看板卡片
+    function renderKanban() {{
+      const policies = getFilteredPolicies();
+      const cardsActive = document.getElementById('cardsActive');
+      const cardsWaiting = document.getElementById('cardsWaiting');
+      const cardsUpcoming = document.getElementById('cardsUpcoming');
+
+      cardsActive.innerHTML = '';
+      cardsWaiting.innerHTML = '';
+      cardsUpcoming.innerHTML = '';
+
+      let countActive = 0;
+      let countWaiting = 0;
+      let countUpcoming = 0;
+
+      const now = new Date();
+
+      policies.forEach(p => {{
+        const card = createPolicyCard(p);
+
+        // 判断是否为等待期或即将扣费
+        if (p.status === '保障中') {{
+          cardsActive.appendChild(card);
+          countActive++;
+
+          // 扣款倒计时预警（若扣款日在近 60 天内）
+          try {{
+            const parts = p.renewal_date.split('-');
+            if (parts.length >= 2) {{
+              const rMonth = parseInt(parts[0], 10);
+              const rDay = parseInt(parts[1], 10);
+              const targetDate = new Date(now.getFullYear(), rMonth - 1, rDay);
+              const diffDays = Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24));
+              if (diffDays >= 0 && diffDays <= 60) {{
+                const copyCard = createPolicyCard(p, `距扣款还剩 ${{diffDays}} 天`);
+                cardsUpcoming.appendChild(copyCard);
+                countUpcoming++;
+              }}
+            }}
+          }} catch(e) {{}}
+        }} else {{
+          cardsWaiting.appendChild(card);
+          countWaiting++;
+        }}
+      }});
+
+      document.getElementById('badgeActive').textContent = countActive;
+      document.getElementById('badgeWaiting').textContent = countWaiting;
+      document.getElementById('badgeUpcoming').textContent = countUpcoming;
+    }}
+
+    function createPolicyCard(p, badgeText) {{
+      const div = document.createElement('div');
+      div.className = 'policy-card';
+      div.onclick = () => openDrawer(p);
+
+      const catClass = p.category.includes('医疗') ? 'cat-医疗险' :
+                       p.category.includes('重疾') ? 'cat-重疾险' :
+                       p.category.includes('意外') ? 'cat-意外险' :
+                       p.category.includes('寿') ? 'cat-寿险' : 'cat-default';
+
+      div.innerHTML = `
+        <div class="card-top">
+          <span class="category-tag ${{catClass}}">${{p.category}}</span>
+          <span class="card-company">${{p.insurer}}</span>
+        </div>
+        <div class="card-title">${{p.product_name}}</div>
+        <div class="card-roles">
+          <span class="role-badge">👤 ${{p.insured}} (${{p.relationship}})</span>
+          <span class="role-badge">💳 续期日: ${{p.renewal_date}}</span>
+        </div>
+        <div class="card-financials">
+          <div>
+            <div class="fin-item-title">保障额度</div>
+            <div class="fin-item-val highlight">${{p.sum_insured_text}}</div>
+          </div>
+          <div>
+            <div class="fin-item-title">年交/趸交保费</div>
+            <div class="fin-item-val">${{p.annual_premium_text}}</div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span>${{badgeText ? '⏰ ' + badgeText : '杠杆比: ' + p.leverage + '倍'}}</span>
+          <span class="action-link">查看详情 & AI精读 →</span>
+        </div>
+      `;
+      return div;
+    }}
+
+    // 抽屉详情
+    function openDrawer(p) {{
+      document.getElementById('drawerTitle').textContent = p.product_name;
+      document.getElementById('drawerSubtitle').textContent = `${{p.insurer}} ｜ ${{p.category}} ｜ ${{p.payment_period}}`;
+
+      const propsEl = document.getElementById('drawerProps');
+      propsEl.innerHTML = `
+        <div class="prop-row"><span class="prop-name">基本保额</span><span class="prop-val" style="color:#10b981;">${{p.sum_insured_text}}</span></div>
+        <div class="prop-row"><span class="prop-name">年交保费</span><span class="prop-val">${{p.annual_premium_text}}</span></div>
+        <div class="prop-row"><span class="prop-name">被保险人</span><span class="prop-val">${{p.insured}} (是投保人的${{p.relationship}})</span></div>
+        <div class="prop-row"><span class="prop-name">投保人</span><span class="prop-val">${{p.policyholder}}</span></div>
+        <div class="prop-row"><span class="prop-name">保障期限</span><span class="prop-val">${{p.coverage_period}}</span></div>
+        <div class="prop-row"><span class="prop-name">交费期限</span><span class="prop-val">${{p.payment_period}}</span></div>
+        <div class="prop-row"><span class="prop-name">生效日期</span><span class="prop-val">${{p.effective_date || '见合同'}}</span></div>
+        <div class="prop-row"><span class="prop-name">年度续期扣款日</span><span class="prop-val">${{p.renewal_date}}</span></div>
+      `;
+
+      const aiEl = document.getElementById('drawerAi');
+      if (p.ai_section && p.ai_section.trim().length > 10) {{
+        aiEl.innerHTML = formatMarkdown(p.ai_section);
+      }} else {{
+        aiEl.innerHTML = '<p style="color:var(--text-dim);">该保单暂无本地 AI 精读记录。可通过脚本运行 --ai 进行条款精读。</p>';
+      }}
+
+      const benefitsSection = document.getElementById('drawerBenefitsSection');
+      const benefitsEl = document.getElementById('drawerBenefits');
+      if (p.benefits_table && p.benefits_table.trim().length > 5) {{
+        benefitsSection.style.display = 'block';
+        benefitsEl.innerHTML = formatMarkdown(p.benefits_table);
+      }} else {{
+        benefitsSection.style.display = 'none';
+      }}
+
+      document.getElementById('drawerOverlay').classList.add('open');
+      document.getElementById('policyDrawer').classList.add('open');
+    }}
+
+    function closeDrawer() {{
+      document.getElementById('drawerOverlay').classList.remove('open');
+      document.getElementById('policyDrawer').classList.remove('open');
+    }}
+
+    document.addEventListener('keydown', (e) => {{
+      if (e.key === 'Escape') closeDrawer();
+    }});
+
+    // 简单 Markdown 转 HTML
+    function formatMarkdown(md) {{
+      if (!md) return '';
+      let html = md;
+      // 表格转换
+      html = html.replace(/\\|(.+?)\\|/g, (match) => match);
+      // 标题
+      html = html.replace(/^### (.*$)/gim, '<h4 style="margin:12px 0 6px 0; color:var(--text-main);">$1</h4>');
+      html = html.replace(/^## (.*$)/gim, '<h3 style="margin:16px 0 8px 0; color:var(--text-main);">$1</h3>');
+      // 粗体
+      html = html.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
+      // 引用块
+      html = html.replace(/^> (.*$)/gim, '<blockquote style="border-left:3px solid var(--accent-primary); padding-left:10px; margin:8px 0; color:var(--text-muted);">$1</blockquote>');
+      return html;
+    }}
+
+    // 渲染统计大盘
+    function renderAnalytics() {{
+      renderDonutChart('memberDonutContainer', window.BAODAN_DATA.memberStats, 'premium');
+      renderDonutChart('categoryDonutContainer', window.BAODAN_DATA.categoryStats, 'coverage');
+      renderMonthlyBarChart();
+      renderLeverageRanking();
+    }}
+
+    // SVG 环形图渲染
+    function renderDonutChart(containerId, statsObj, key) {{
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+
+      const items = Object.entries(statsObj);
+      const total = items.reduce((acc, cur) => acc + cur[1][key], 0);
+      if (total <= 0) {{
+        container.innerHTML = '<span style="color:var(--text-dim);">暂无数据</span>';
+        return;
+      }}
+
+      const colors = ['#10b981', '#6366f1', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6'];
+      const radius = 65;
+      const circumference = 2 * Math.PI * radius;
+      let offset = 0;
+
+      let circlesHtml = '';
+      let legendHtml = '<div class="donut-legend">';
+
+      items.forEach(([label, data], idx) => {{
+        const val = data[key];
+        const pct = val / total;
+        const dashArray = `${{pct * circumference}} ${{circumference}}`;
+        const color = colors[idx % colors.length];
+
+        circlesHtml += `
+          <circle cx="85" cy="85" r="${{radius}}" fill="transparent"
+            stroke="${{color}}" stroke-width="22" stroke-dasharray="${{dashArray}}" stroke-dashoffset="-${{offset}}"
+          />
+        `;
+        offset += pct * circumference;
+
+        const valText = key === 'premium' ? '￥' + val.toLocaleString() : (val / 10000).toFixed(1) + '万';
+        legendHtml += `
+          <div class="legend-row">
+            <span class="legend-label">
+              <span class="legend-color" style="background:${{color}};"></span>
+              <span>${{label}}</span>
+            </span>
+            <span class="legend-val">${{valText}} (${{(pct * 100).toFixed(1)}}%)</span>
+          </div>
+        `;
+      }});
+
+      legendHtml += '</div>';
+
+      container.innerHTML = `
+        <svg class="donut-svg" viewBox="0 0 170 170">
+          <circle cx="85" cy="85" r="${{radius}}" fill="transparent" stroke="var(--border-color)" stroke-width="22" />
+          ${{circlesHtml}}
+        </svg>
+        ${{legendHtml}}
+      `;
+    }}
+
+    // 12 个月扣款柱状图
+    function renderMonthlyBarChart() {{
+      const container = document.getElementById('monthlyBarChart');
+      container.innerHTML = '';
+      const flow = window.BAODAN_DATA.monthlyFlow;
+      const maxVal = Math.max(...Object.values(flow), 1);
+      const peakM = window.BAODAN_DATA.peakMonth;
+
+      for (let m = 1; m <= 12; m++) {{
+        const val = flow[m] || 0;
+        const heightPct = (val / maxVal) * 100;
+        const isPeak = (m === peakM && val > 0);
+
+        const col = document.createElement('div');
+        col.className = 'bar-col';
+        col.innerHTML = `
+          ${{val > 0 ? `<span class="bar-tip">${{Math.round(val)}}</span>` : ''}}
+          <div class="bar-pillar ${{isPeak ? 'peak' : ''}}" style="height: ${{Math.max(heightPct, 4)}}%;"></div>
+          <span class="bar-label">${{m}}月</span>
+        `;
+        container.appendChild(col);
+      }}
+    }}
+
+    // 杠杆率排行榜
+    function renderLeverageRanking() {{
+      const tbody = document.querySelector('#leverageTable tbody');
+      tbody.innerHTML = '';
+      const sorted = [...window.BAODAN_DATA.policies]
+        .filter(p => p.status === '保障中')
+        .sort((a, b) => b.leverage - a.leverage);
+
+      const maxLev = sorted.length > 0 ? sorted[0].leverage : 1;
+      const medals = ['🥇', '🥈', '🥉'];
+
+      sorted.forEach((p, idx) => {{
+        const tr = document.createElement('tr');
+        const rankBadge = medals[idx] || (idx + 1);
+        const pct = Math.min(100, (p.leverage / maxLev) * 100);
+
+        tr.innerHTML = `
+          <td class="rank-num">${{rankBadge}}</td>
+          <td><strong>${{p.product_name}}</strong><br><span style="font-size:11px;color:var(--text-dim);">${{p.insurer}}</span></td>
+          <td>${{p.insured}} (${{p.relationship}})</td>
+          <td>
+            <strong>${{p.leverage.toLocaleString()}} 倍</strong>
+            <div class="progress-bar"><div class="progress-fill" style="width: ${{pct}}%;"></div></div>
+          </td>
+        `;
+        tr.style.cursor = 'pointer';
+        tr.onclick = () => openDrawer(p);
+        tbody.appendChild(tr);
+      }});
+    }}
+
+    // 渲染缴费日历
+    function renderCalendar() {{
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '';
+      const flow = window.BAODAN_DATA.monthlyFlow;
+
+      for (let m = 1; m <= 12; m++) {{
+        const prem = flow[m] || 0;
+        const card = document.createElement('div');
+        card.className = 'chart-card';
+        card.style.padding = '18px';
+
+        const policiesThisMonth = window.BAODAN_DATA.policies.filter(p => {{
+          try {{
+            return parseInt(p.renewal_date.split('-')[0], 10) === m;
+          }} catch(e) {{ return false; }}
+        }});
+
+        let listHtml = '<div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">';
+        if (policiesThisMonth.length === 0) {{
+          listHtml += '<span style="font-size:12px;color:var(--text-dim);">本月无续期扣款</span>';
+        }} else {{
+          policiesThisMonth.forEach(p => {{
+            listHtml += `
+              <div style="font-size:12px; display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:6px; cursor:pointer;" onclick="openDrawer(window.BAODAN_DATA.policies.find(x=>x.id==='${{p.id}}'))">
+                <span><strong>${{p.product_name}}</strong> (${{p.insured}})</span>
+                <span style="color:#10b981;font-weight:700;">${{p.annual_premium_text}}</span>
+              </div>
+            `;
+          }});
+        }}
+        listHtml += '</div>';
+
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:16px; font-weight:800;">${{m}} 月份</span>
+            <span style="font-size:13px; font-weight:700; color:${{prem > 0 ? '#10b981' : 'var(--text-dim)'}};">
+              ${{prem > 0 ? '应缴: ￥' + prem.toLocaleString() : '无扣款'}}
+            </span>
+          </div>
+          ${{listHtml}}
+        `;
+        grid.appendChild(card);
+      }}
+    }}
+  </script>
+</body>
+</html>
+"""
+
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+    print(f"✨ 独立离线 Web 看板生成成功: {output_file}")
+    return output_file
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="ob-baodan 独立 Web 看板生成器")
+    parser.add_argument("--vault", default=os.environ.get("BAODAN_VAULT_DIR", "/Users/clawbot/AI/baodan/baodan"), help="指定保单仓库根目录")
+    parser.add_argument("--output", help="指定 HTML 输出路径")
+    parser.add_argument("--open", action="store_true", help="生成后自动在默认浏览器中打开")
+    args = parser.parse_args()
+
+    out = build_standalone_dashboard(args.vault, args.output)
+    if args.open:
+        if sys.platform == "darwin":
+            os.system(f'open "{out}"')
+        elif sys.platform.startswith("linux"):
+            os.system(f'xdg-open "{out}"')
+
+if __name__ == "__main__":
+    main()

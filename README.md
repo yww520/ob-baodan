@@ -59,6 +59,12 @@
 5. **承保保司资产集中度**：央企大型保司 vs 头部上市机构 vs 专业互联网保司分布；
 6. **缴费期限与资产属性**：一年期纯消费型防线 vs 终身确定型资产。
 
+### 6. 🌐 零依赖独立离线 Web 看板（无需安装 Obsidian，双击 HTML 即看）
+* 引擎在解析沉淀的同时，自动在根目录编译单个纯静态的 `baodan_dashboard.html`；
+* **完全离线可用**：不依赖任何网络服务器，零第三方在线 CDN 依赖，在任何浏览器（Chrome/Safari/Edge/手机端）中双击即可运行；
+* **现代交互体验**：包含拖拽式泳道看板、SVG 交互式环形图与柱状图、临近续期预警卡片、实时搜索筛选与右侧滑出式 AI 条款精读抽屉；
+* **打印/PDF 导出友好**：内置 `@media print` 打印优化样式，一键打印或导出家庭保单全景体检报告。
+
 ---
 
 ## 📁 仓库与知识库目录结构
@@ -68,7 +74,8 @@ ob-baodan/
 ├── SKILL.md                 # Agent Skill 规范与工作流定义
 ├── README.md                # 项目文档
 ├── scripts/
-│   └── policy_processor.py  # 本地脱敏、套件聚合与 AI 分析核心引擎 (Python)
+│   ├── policy_processor.py  # 本地脱敏、套件聚合与 AI 分析核心引擎 (Python)
+│   └── dashboard_generator.py # 独立离线 Web 看板生成器
 ├── plugin/                  # Obsidian 社区专属插件 (baodan-ai)
 │   ├── manifest.json
 │   ├── main.js              # 编译好的插件脚本
@@ -76,7 +83,8 @@ ob-baodan/
 │   └── src/
 │       ├── main.ts          # 插件主入口
 │       └── chat-view.ts     # 右侧独立追问面板
-└── vault-template/          # 开箱即用的 Obsidian 保单仓库模板
+└── vault-template/          # 开箱即用的保单知识库模板
+    ├── baodan_dashboard.html # 零依赖独立离线 Web 看板（无需 Obsidian 双击即看）
     ├── 00_看板中心/
     │   ├── 📊 保单全景看板.md
     │   ├── 📈 全家保单多维数据统计大盘.md
@@ -123,6 +131,14 @@ python3 scripts/policy_processor.py --batch --vault "./vault-template"
 1. 使用 Obsidian 打开 `vault-template` 文件夹作为仓库；
 2. 在设置中开启第三方插件：`dataview`、`obsidian-kanban` 与 `baodan-ai`；
 3. 打开 `00_看板中心/📊 保单全景看板.md` 与 `📈 全家保单多维数据统计大盘.md` 查看全景图表！
+
+### 5. 没有安装 Obsidian？双击即可在浏览器中看全景大盘！
+直接使用任何浏览器（Chrome / Safari / Edge）双击打开模板目录下的 **`vault-template/baodan_dashboard.html`**；
+或者在终端执行一键编译并在默认浏览器中自动打开：
+```bash
+python3 scripts/policy_processor.py --html --open --vault "./vault-template"
+```
+包含完整的泳道看板、SVG 交互式图表、60天临近续费提醒、搜索筛选与侧边滑出式 AI 条款精读抽屉。
 
 ---
 
