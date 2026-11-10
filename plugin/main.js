@@ -1,43 +1,45 @@
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
 var __export = (target, all) => {
-  __markAsModule(target);
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
-var __reExport = (target, module2, desc) => {
-  if (module2 && typeof module2 === "object" || typeof module2 === "function") {
-    for (let key of __getOwnPropNames(module2))
-      if (!__hasOwnProp.call(target, key) && key !== "default")
-        __defProp(target, key, { get: () => module2[key], enumerable: !(desc = __getOwnPropDesc(module2, key)) || desc.enumerable });
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
   }
-  return target;
+  return to;
 };
-var __toModule = (module2) => {
-  return __reExport(__markAsModule(__defProp(module2 != null ? __create(__getProtoOf(module2)) : {}, "default", module2 && module2.__esModule && "default" in module2 ? { get: () => module2.default, enumerable: true } : { value: module2, enumerable: true })), module2);
-};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// AI/baodan-ai-plugin/src/main.ts
-__export(exports, {
+// src/main.ts
+var main_exports = {};
+__export(main_exports, {
   DEFAULT_SETTINGS: () => DEFAULT_SETTINGS,
   default: () => BaodanAiPlugin
 });
-var import_obsidian2 = __toModule(require("obsidian"));
+module.exports = __toCommonJS(main_exports);
+var import_obsidian2 = require("obsidian");
 
-// AI/baodan-ai-plugin/src/chat-view.ts
-var import_obsidian = __toModule(require("obsidian"));
+// src/chat-view.ts
+var import_obsidian = require("obsidian");
 var VIEW_TYPE_BAODAN_CHAT = "baodan-ai-chat-view";
 var BaodanChatView = class extends import_obsidian.ItemView {
+  plugin;
+  currentFile = null;
+  messages = [];
+  isThinking = false;
+  headerTitleEl;
+  messagesContainer;
+  inputEl;
+  sendBtn;
+  quickBar;
   constructor(leaf, plugin) {
     super(leaf);
-    this.currentFile = null;
-    this.messages = [];
-    this.isThinking = false;
     this.plugin = plugin;
   }
   getViewType() {
@@ -85,7 +87,7 @@ var BaodanChatView = class extends import_obsidian.ItemView {
       "\u{1F476} \u5C0F\u5B69\u80BA\u708E\u4F4F\u9662\u62A5\u9500\u6D4B\u7B97",
       "\u{1F48A} \u81EA\u8D39\u836F/\u7279\u836F\u80FD\u62A5\u9500\u5417",
       "\u{1F3E5} \u7279\u9700\u90E8/\u79C1\u7ACB\u533B\u9662\u8D54\u4E0D\u8D54",
-      "\u{1F396}\uFE0F \u7406\u8D54\u987B\u63D0\u4F9B\u54EA\u4E9B\u4F18\u5F85\u8BC1\u6750\u6599",
+      "\u{1F396}\uFE0F \u7406\u8D54\u987B\u63D0\u4F9B\u54EA\u4E9B\u8BC1\u660E\u6750\u6599",
       "\u23F3 \u65E2\u5F80\u75C7\u4E0E30\u5929\u7B49\u5F85\u671F\u89C4\u5B9A",
       "\u{1F4DE} \u95E8\u8BCA\u5C31\u533B\u7EFF\u901A\u600E\u4E48\u9884\u7EA6"
     ];
@@ -102,8 +104,8 @@ var BaodanChatView = class extends import_obsidian.ItemView {
           question = "\u4F4F\u9662\u671F\u95F4\u533B\u751F\u5F00\u5177\u7684\u533B\u4FDD\u76EE\u5F55\u5916\u81EA\u8D39\u836F\u3001\u9776\u5411\u836F\u80FD\u5426\u5728\u6B64\u4FDD\u5355\u62A5\u9500\uFF1F\u62A5\u9500\u6BD4\u4F8B\u548C\u9650\u5236\u662F\u4EC0\u4E48\uFF1F";
         } else if (q.includes("\u7279\u9700\u90E8/\u79C1\u7ACB\u533B\u9662")) {
           question = "\u5982\u679C\u56E0\u7D27\u6025\u60C5\u51B5\u53BB\u4E86\u4E09\u7532\u533B\u9662\u7279\u9700\u90E8\u3001\u56FD\u9645\u533B\u7597\u90E8\u6216\u79C1\u7ACB\u533B\u9662\u5C31\u8BCA\uFF0C\u672C\u4FDD\u5355\u662F\u5426\u627F\u62C5\u4FDD\u9669\u8D23\u4EFB\uFF1F";
-        } else if (q.includes("\u4F18\u5F85\u8BC1\u6750\u6599")) {
-          question = "\u7279\u522B\u7EA6\u5B9A\u4E2D\u9488\u5BF9\u9000\u5F79\u519B\u4EBA\u5BB6\u5C5E\uFF08\u5B50\u5973\uFF09\u51FA\u9669\u7406\u8D54\uFF0C\u5FC5\u987B\u63D0\u4F9B\u54EA\u4E9B\u5177\u4F53\u8BC1\u660E\u6750\u6599\uFF1F\u5982\u679C\u7F3A\u5931\u6237\u53E3\u672C\u5982\u4F55\u8865\u529E\uFF1F";
+        } else if (q.includes("\u8BC1\u660E\u6750\u6599")) {
+          question = "\u7279\u522B\u7EA6\u5B9A\u4E2D\u9488\u5BF9\u51FA\u9669\u7406\u8D54\uFF0C\u5FC5\u987B\u63D0\u4F9B\u54EA\u4E9B\u5177\u4F53\u8BC1\u660E\u6750\u6599\uFF1F\u5982\u8EAB\u4EFD\u51ED\u8BC1\u6216\u5BB6\u5C5E\u5173\u7CFB\u8BC1\u660E\uFF1F";
         } else if (q.includes("\u65E2\u5F80\u75C7\u4E0E30\u5929\u7B49\u5F85\u671F")) {
           question = "\u5728\u4FDD\u5355\u751F\u6548\u540E30\u5929\u7B49\u5F85\u671F\u5185\u751F\u75C5\uFF0C\u4FDD\u8D39\u662F\u5426\u9000\u8FD8\uFF1F\u6295\u4FDD\u524D\u5DF2\u6709\u7684\u75BE\u75C5\uFF08\u65E2\u5F80\u75C7\uFF09\u80FD\u5426\u7406\u8D54\uFF1F";
         } else if (q.includes("\u95E8\u8BCA\u5C31\u533B\u7EFF\u901A")) {
@@ -136,9 +138,11 @@ var BaodanChatView = class extends import_obsidian.ItemView {
     });
     this.sendBtn.onclick = () => this.handleSend();
     this.detectActivePolicy();
-    this.registerEvent(this.app.workspace.on("active-leaf-change", () => {
-      this.detectActivePolicy();
-    }));
+    this.registerEvent(
+      this.app.workspace.on("active-leaf-change", () => {
+        this.detectActivePolicy();
+      })
+    );
   }
   detectActivePolicy(file) {
     const activeFile = file || this.app.workspace.getActiveFile();
@@ -172,7 +176,12 @@ var BaodanChatView = class extends import_obsidian.ItemView {
       const metaRow = bubbleEl.createDiv({ cls: "baodan-bubble-meta" });
       metaRow.setText(msg.role === "user" ? "\u{1F464} \u60A8\u7684\u8FFD\u95EE" : "\u{1F916} DeepSeek \u7406\u8D54\u4E13\u5BB6");
       const contentEl = bubbleEl.createDiv({ cls: "baodan-bubble-content markdown-rendered" });
-      void import_obsidian.MarkdownRenderer.renderMarkdown(msg.content, contentEl, this.currentFile?.path || "", new import_obsidian.Component());
+      void import_obsidian.MarkdownRenderer.renderMarkdown(
+        msg.content,
+        contentEl,
+        this.currentFile?.path || "",
+        new import_obsidian.Component()
+      );
     }
     if (this.isThinking) {
       const loadingBubble = this.messagesContainer.createDiv({
@@ -186,8 +195,7 @@ var BaodanChatView = class extends import_obsidian.ItemView {
   }
   async handleSend() {
     const question = this.inputEl.value.trim();
-    if (!question || this.isThinking)
-      return;
+    if (!question || this.isThinking) return;
     if (!this.currentFile) {
       new import_obsidian.Notice("\u8BF7\u5148\u5728\u4E3B\u7A97\u53E3\u4E2D\u6253\u5F00\u4E00\u4EFD\u4FDD\u5355\u7B14\u8BB0\uFF01");
       return;
@@ -226,7 +234,7 @@ var BaodanChatView = class extends import_obsidian.ItemView {
 \u5F53\u524D\u7528\u6237\u6B63\u5728\u67E5\u9605\u4E00\u4EFD\u771F\u5B9E\u7684\u4E2A\u4EBA\u4FDD\u9669\u5408\u540C\u7B14\u8BB0\uFF0C\u5E76\u5BF9\u8BE5\u4FDD\u5355\u7684\u5177\u4F53\u7406\u8D54\u89C4\u5219\u3001\u514D\u8D23\u6392\u96F7\u3001\u533B\u9662\u7B49\u7EA7\u3001\u62A5\u9500\u91D1\u989D\u6D4B\u7B97\u6216\u589E\u503C\u6743\u76CA\u63D0\u51FA\u4E86\u8FFD\u95EE\u3002
 
 \u4F60\u7684\u804C\u8D23\uFF1A
-1. \u5FC5\u987B\u5B8C\u5168\u57FA\u4E8E\u4FDD\u5355\u7B14\u8BB0\u63D0\u4F9B\u7684\u771F\u5B9E\u5408\u540C\u7EA6\u5B9A\uFF08\u514D\u8D54\u989D\u3001\u5206\u6BB5\u62A5\u9500\u6BD4\u4F8B\u3001\u6709\u65E0\u793E\u4FDD\u5C31\u8BCA\u5DEE\u5F02\u3001\u7ED9\u4ED8\u9650\u989D\u3001\u9000\u5F79\u519B\u4EBA\u7279\u522B\u7EA6\u5B9A\uFF09\u8FDB\u884C\u7CBE\u786E\u8BA1\u7B97\u4E0E\u89E3\u7B54\uFF1B
+1. \u5FC5\u987B\u5B8C\u5168\u57FA\u4E8E\u4FDD\u5355\u7B14\u8BB0\u63D0\u4F9B\u7684\u771F\u5B9E\u5408\u540C\u7EA6\u5B9A\uFF08\u514D\u8D54\u989D\u3001\u5206\u6BB5\u62A5\u9500\u6BD4\u4F8B\u3001\u6709\u65E0\u793E\u4FDD\u5C31\u8BCA\u5DEE\u5F02\u3001\u7ED9\u4ED8\u9650\u989D\u3001\u7279\u6B8A\u9650\u5236\u4E0E\u7EA6\u5B9A\uFF09\u8FDB\u884C\u7CBE\u786E\u8BA1\u7B97\u4E0E\u89E3\u7B54\uFF1B
 2. \u82E5\u6D89\u53CA\u8D39\u7528\u62A5\u9500\u6D4B\u7B97\uFF0C\u5FC5\u987B\u7ED9\u51FA\u6E05\u6670\u7684\u6570\u5B66\u516C\u5F0F\u548C\u5206\u6B65\u9AA4\u8BA1\u7B97\u8FC7\u7A0B\uFF1B
 3. \u660E\u786E\u63D0\u793A\u7528\u6237\u7406\u8D54\u65F6\u7684\u7EA2\u7EBF\uFF08\u5982\u533B\u4FDD\u7ED3\u7B97\u3001\u4E8C\u7EA7\u4EE5\u4E0A\u516C\u7ACB\u533B\u9662\u666E\u901A\u90E8\u3001\u5FC5\u5907\u8BC1\u4EF6\u6E05\u5355\uFF09\uFF1B
 4. \u8BED\u8A00\u4E13\u4E1A\u3001\u5BA2\u89C2\u3001\u4E25\u8C28\uFF0C\u4E25\u7981\u80E1\u7F16\u4E71\u9020\u4E0D\u5B58\u5728\u7684\u8D23\u4EFB\u3002`;
@@ -266,8 +274,7 @@ ${question}`;
       let errMsg = `HTTP ${response.status}`;
       try {
         const errJson = JSON.parse(response.text);
-        if (errJson?.error?.message)
-          errMsg = errJson.error.message;
+        if (errJson?.error?.message) errMsg = errJson.error.message;
       } catch {
       }
       throw new Error(errMsg);
@@ -323,7 +330,7 @@ ${question}`;
   }
 };
 
-// AI/baodan-ai-plugin/src/main.ts
+// src/main.ts
 var DEFAULT_SETTINGS = {
   aiApiUrl: "https://api.deepseek.com/v1",
   aiApiKey: "",
@@ -331,9 +338,13 @@ var DEFAULT_SETTINGS = {
   temperature: 0.2
 };
 var BaodanAiPlugin = class extends import_obsidian2.Plugin {
+  settings;
   async onload() {
     await this.loadSettings();
-    this.registerView(VIEW_TYPE_BAODAN_CHAT, (leaf) => new BaodanChatView(leaf, this));
+    this.registerView(
+      VIEW_TYPE_BAODAN_CHAT,
+      (leaf) => new BaodanChatView(leaf, this)
+    );
     this.addRibbonIcon("message-square", "\u4FDD\u5355 AI: \u6253\u5F00\u667A\u80FD\u8FFD\u95EE\u4E0E\u7B54\u7591\u9762\u677F", async () => {
       const activeFile = this.app.workspace.getActiveFile();
       await this.openChatView(activeFile || void 0);
@@ -343,8 +354,7 @@ var BaodanAiPlugin = class extends import_obsidian2.Plugin {
       name: "\u6253\u5F00\u4FDD\u5355\u667A\u80FD\u8FFD\u95EE\u5BF9\u8BDD\u9762\u677F (Chat)",
       checkCallback: (checking) => {
         const activeFile = this.app.workspace.getActiveFile();
-        if (checking)
-          return !!(activeFile && activeFile.path.endsWith(".md"));
+        if (checking) return !!(activeFile && activeFile.path.endsWith(".md"));
         this.openChatView(activeFile || void 0);
       }
     });
@@ -366,8 +376,7 @@ var BaodanAiPlugin = class extends import_obsidian2.Plugin {
       checkCallback: (checking) => {
         const activeFile = this.app.workspace.getActiveFile();
         const isValid = activeFile && activeFile.path.endsWith(".md");
-        if (checking)
-          return !!isValid;
+        if (checking) return !!isValid;
         if (isValid) {
           this.runAiAnalysis(activeFile);
         }
@@ -407,7 +416,7 @@ var BaodanAiPlugin = class extends import_obsidian2.Plugin {
             await this.runAiAnalysis(file);
             reanalyzeBtn.setText("\u{1F504} \u91CD\u65B0\u6267\u884C DeepSeek \u6761\u6B3E\u7CBE\u8BFB");
             reanalyzeBtn.disabled = false;
-            statusEl.setText(`\u2705 \u6761\u6B3E\u6DF1\u5EA6\u7CBE\u8BFB\u5DF2\u4E8E ${new Date().toLocaleTimeString()} \u5B8C\u6210\u66F4\u65B0\uFF01\u7ED3\u679C\u5448\u73B0\u5728\u4E0B\u65B9\u3002`);
+            statusEl.setText(`\u2705 \u6761\u6B3E\u6DF1\u5EA6\u7CBE\u8BFB\u5DF2\u4E8E ${(/* @__PURE__ */ new Date()).toLocaleTimeString()} \u5B8C\u6210\u66F4\u65B0\uFF01\u7ED3\u679C\u5448\u73B0\u5728\u4E0B\u65B9\u3002`);
           } else {
             throw new Error("\u672A\u627E\u5230\u5F53\u524D\u4FDD\u5355\u7B14\u8BB0\u6587\u4EF6");
           }
@@ -462,8 +471,7 @@ var BaodanAiPlugin = class extends import_obsidian2.Plugin {
       let lastAnswer = "";
       const triggerInlineAsk = async () => {
         const qText = inputEl.value.trim();
-        if (!qText)
-          return;
+        if (!qText) return;
         askBtn.disabled = true;
         askBtn.setText("\u23F3 \u601D\u8003\u4E2D...");
         resultArea.style.display = "block";
@@ -477,7 +485,12 @@ var BaodanAiPlugin = class extends import_obsidian2.Plugin {
           lastQuestion = qText;
           lastAnswer = answer;
           answerContent.empty();
-          void import_obsidian2.MarkdownRenderer.renderMarkdown(answer, answerContent, file.path, new import_obsidian2.Component());
+          void import_obsidian2.MarkdownRenderer.renderMarkdown(
+            answer,
+            answerContent,
+            file.path,
+            new import_obsidian2.Component()
+          );
           askBtn.disabled = false;
           askBtn.setText("\u{1F680} \u7ACB\u5373\u8FFD\u95EE");
         } catch (err) {
@@ -494,8 +507,7 @@ var BaodanAiPlugin = class extends import_obsidian2.Plugin {
         }
       });
       saveToNoteBtn.onclick = async () => {
-        if (!lastQuestion || !lastAnswer)
-          return;
+        if (!lastQuestion || !lastAnswer) return;
         const file = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
         if (file instanceof import_obsidian2.TFile) {
           await this.appendQAToFile(file, lastQuestion, lastAnswer);
@@ -523,8 +535,7 @@ var BaodanAiPlugin = class extends import_obsidian2.Plugin {
       const view = leaf.view;
       if (view && typeof view.setTargetFile === "function") {
         const target = file || this.app.workspace.getActiveFile() || void 0;
-        if (target)
-          view.setTargetFile(target);
+        if (target) view.setTargetFile(target);
       }
     }
   }
@@ -544,7 +555,7 @@ var BaodanAiPlugin = class extends import_obsidian2.Plugin {
 \u5F53\u524D\u7528\u6237\u6B63\u5728\u67E5\u9605\u4E00\u4EFD\u771F\u5B9E\u7684\u4E2A\u4EBA\u4FDD\u9669\u5408\u540C\u7B14\u8BB0\uFF0C\u5E76\u5BF9\u8BE5\u4FDD\u5355\u7684\u5177\u4F53\u7406\u8D54\u89C4\u5219\u3001\u514D\u8D23\u6392\u96F7\u3001\u533B\u9662\u7B49\u7EA7\u3001\u62A5\u9500\u91D1\u989D\u6D4B\u7B97\u6216\u589E\u503C\u6743\u76CA\u63D0\u51FA\u4E86\u8FFD\u95EE\u3002
 
 \u4F60\u7684\u804C\u8D23\uFF1A
-1. \u5FC5\u987B\u5B8C\u5168\u57FA\u4E8E\u4FDD\u5355\u7B14\u8BB0\u63D0\u4F9B\u7684\u771F\u5B9E\u5408\u540C\u7EA6\u5B9A\uFF08\u514D\u8D54\u989D\u3001\u5206\u6BB5\u62A5\u9500\u6BD4\u4F8B\u3001\u6709\u65E0\u793E\u4FDD\u5C31\u8BCA\u5DEE\u5F02\u3001\u7ED9\u4ED8\u9650\u989D\u3001\u9000\u5F79\u519B\u4EBA\u7279\u522B\u7EA6\u5B9A\uFF09\u8FDB\u884C\u7CBE\u786E\u8BA1\u7B97\u4E0E\u89E3\u7B54\uFF1B
+1. \u5FC5\u987B\u5B8C\u5168\u57FA\u4E8E\u4FDD\u5355\u7B14\u8BB0\u63D0\u4F9B\u7684\u771F\u5B9E\u5408\u540C\u7EA6\u5B9A\uFF08\u514D\u8D54\u989D\u3001\u5206\u6BB5\u62A5\u9500\u6BD4\u4F8B\u3001\u6709\u65E0\u793E\u4FDD\u5C31\u8BCA\u5DEE\u5F02\u3001\u7ED9\u4ED8\u9650\u989D\u3001\u7279\u6B8A\u9650\u5236\u4E0E\u7EA6\u5B9A\uFF09\u8FDB\u884C\u7CBE\u786E\u8BA1\u7B97\u4E0E\u89E3\u7B54\uFF1B
 2. \u82E5\u6D89\u53CA\u8D39\u7528\u62A5\u9500\u6D4B\u7B97\uFF0C\u5FC5\u987B\u7ED9\u51FA\u6E05\u6670\u7684\u6570\u5B66\u516C\u5F0F\u548C\u5206\u6B65\u9AA4\u8BA1\u7B97\u8FC7\u7A0B\uFF1B
 3. \u660E\u786E\u63D0\u793A\u7528\u6237\u7406\u8D54\u65F6\u7684\u7EA2\u7EBF\uFF08\u5982\u533B\u4FDD\u7ED3\u7B97\u3001\u4E8C\u7EA7\u4EE5\u4E0A\u516C\u7ACB\u533B\u9662\u666E\u901A\u90E8\u3001\u5FC5\u5907\u8BC1\u4EF6\u6E05\u5355\uFF09\uFF1B
 4. \u8BED\u8A00\u4E13\u4E1A\u3001\u5BA2\u89C2\u3001\u4E25\u8C28\uFF0C\u4E25\u7981\u80E1\u7F16\u4E71\u9020\u4E0D\u5B58\u5728\u7684\u8D23\u4EFB\u3002`;
@@ -579,8 +590,7 @@ ${question}`;
       let errMsg = `HTTP ${response.status}`;
       try {
         const errJson = JSON.parse(response.text);
-        if (errJson?.error?.message)
-          errMsg = errJson.error.message;
+        if (errJson?.error?.message) errMsg = errJson.error.message;
       } catch {
       }
       throw new Error(errMsg);
@@ -589,7 +599,7 @@ ${question}`;
     return data?.choices?.[0]?.message?.content?.trim() || "DeepSeek \u672A\u8FD4\u56DE\u6709\u6548\u89E3\u7B54\u3002";
   }
   async appendQAToFile(file, question, answer) {
-    const timeStr = new Date().toLocaleString();
+    const timeStr = (/* @__PURE__ */ new Date()).toLocaleString();
     let appendMd = `
 
 ### \u{1F4AC} \u5386\u53F2 AI \u8FFD\u95EE\u4E0E\u7B54\u7591\u8BB0\u5F55
@@ -661,8 +671,7 @@ ${clauseContext}`;
       let errMsg = `HTTP ${response.status}`;
       try {
         const errJson = JSON.parse(response.text);
-        if (errJson?.error?.message)
-          errMsg = errJson.error.message;
+        if (errJson?.error?.message) errMsg = errJson.error.message;
       } catch {
       }
       new import_obsidian2.Notice(`\u274C DeepSeek \u8BF7\u6C42\u5931\u8D25: ${errMsg}`);
@@ -682,7 +691,7 @@ button: true
 \`\`\`
 
 > [!SUCCESS] \u{1F916} DeepSeek AI \u4E13\u5BB6\u6DF1\u5EA6\u6761\u6B3E\u4E0E\u7406\u8D54\u68B3\u7406\u62A5\u544A
-> *(\u751F\u6210\u65F6\u95F4\uFF1A${new Date().toLocaleString()} \uFF5C \u6A21\u578B\uFF1A${this.settings.aiModel})*
+> *(\u751F\u6210\u65F6\u95F4\uFF1A${(/* @__PURE__ */ new Date()).toLocaleString()} \uFF5C \u6A21\u578B\uFF1A${this.settings.aiModel})*
 
 ${aiReport}
 
@@ -710,6 +719,7 @@ ${aiReport}
   }
 };
 var BaodanAiSettingTab = class extends import_obsidian2.PluginSettingTab {
+  plugin;
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -725,13 +735,17 @@ var BaodanAiSettingTab = class extends import_obsidian2.PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
-    new import_obsidian2.Setting(containerEl).setName("API Base URL").setDesc("DeepSeek \u517C\u5BB9\u63A5\u53E3\u5730\u5740\u3002").addText((text) => text.setPlaceholder("https://api.deepseek.com/v1").setValue(this.plugin.settings.aiApiUrl).onChange(async (value) => {
-      this.plugin.settings.aiApiUrl = value.trim();
-      await this.plugin.saveSettings();
-    }));
-    new import_obsidian2.Setting(containerEl).setName("AI \u6A21\u578B\u540D\u79F0").setDesc("\u9ED8\u8BA4\u4F7F\u7528 deepseek-chat\uFF08\u6027\u4EF7\u6BD4\u6781\u9AD8\u4E14\u4E13\u4E1A\u4E25\u8C28\uFF09\u3002").addText((text) => text.setPlaceholder("deepseek-chat").setValue(this.plugin.settings.aiModel).onChange(async (value) => {
-      this.plugin.settings.aiModel = value.trim();
-      await this.plugin.saveSettings();
-    }));
+    new import_obsidian2.Setting(containerEl).setName("API Base URL").setDesc("DeepSeek \u517C\u5BB9\u63A5\u53E3\u5730\u5740\u3002").addText(
+      (text) => text.setPlaceholder("https://api.deepseek.com/v1").setValue(this.plugin.settings.aiApiUrl).onChange(async (value) => {
+        this.plugin.settings.aiApiUrl = value.trim();
+        await this.plugin.saveSettings();
+      })
+    );
+    new import_obsidian2.Setting(containerEl).setName("AI \u6A21\u578B\u540D\u79F0").setDesc("\u9ED8\u8BA4\u4F7F\u7528 deepseek-chat\uFF08\u6027\u4EF7\u6BD4\u6781\u9AD8\u4E14\u4E13\u4E1A\u4E25\u8C28\uFF09\u3002").addText(
+      (text) => text.setPlaceholder("deepseek-chat").setValue(this.plugin.settings.aiModel).onChange(async (value) => {
+        this.plugin.settings.aiModel = value.trim();
+        await this.plugin.saveSettings();
+      })
+    );
   }
 };

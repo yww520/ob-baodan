@@ -11,7 +11,7 @@
    - 绝不搞反投保人与被保险人。
 3. 【全息零泄漏隐私脱敏 (Comprehensive PII & Birthday Masking)】：
    - 身份证、手机、银行卡、保单号、经办人员姓名全面打码。
-   - 【出生日期全量脱敏】：将“1985年12月1日”、“2021年12月27日”等打码为 [出生日期_1985年**月**日]，杜绝泄漏。
+   - 【出生日期全量脱敏】：将出生日期如“1990年5月10日”精准脱敏为 [出生日期_1990年**月**日]，杜绝泄漏。
    - 本地安全映射字典 policy_secret_mapping.json 记录真实值与脱敏标签。
 4. 【三合一 DeepSeek AI 专家精读】：
    - 结合保单凭证（保额/保费/比例）、条款（免责/暗坑/医院）与增值手册（门诊绿通/垫付）合并提炼，输出超高水准理赔指南。
@@ -380,22 +380,22 @@ def parse_policy_core_meta(master_pages, filename=""):
     header_pages = "\n\n".join(master_pages[:min(3, len(master_pages))])
 
     # 1. 保险公司
-    insurer = "中国人寿财产保险股份有限公司"
+    insurer = "保险公司"
     ins_m = re.search(r'([\u4e00-\u9fa5]{2,12}(?:人寿|健康|财产|保险|养老)(?:股份)?有限公司(?:[\u4e00-\u9fa5]{2,6}分公司)?)', header_pages)
     if ins_m:
         insurer = ins_m.group(1).strip()
 
     # 2. 产品方案名称
-    product_name = "退役军人家庭-全年医疗费用保险卡（尊享版）"
+    product_name = "个人保险"
     lines = [l.strip() for l in p1.splitlines() if l.strip()]
     for l in lines[:4]:
-        if any(k in l for k in ["保险卡", "保险单", "医疗保险", "重大疾病"]):
+        if any(k in l for k in ["保险卡", "保险单", "医疗保险", "重大疾病", "意外险", "寿险"]):
             product_name = l.replace("电子保险单", "").strip()
             break
 
     # 3. 保额与保费
-    sum_insured = 7005000
-    annual_premium = 612.0
+    sum_insured = 1000000
+    annual_premium = 500.0
 
     repaired_header = re.sub(r'(CNY\s*[0-9,]+)\s*\n\s*([0-9,.]+)\s*\n\s*([0-9]+)', r'\1\2\3', header_pages)
     repaired_header = re.sub(r'(CNY\s*[0-9,]+)\.\s*\n\s*([0-9]{2})', r'\1.\2', repaired_header)
@@ -466,27 +466,20 @@ def call_deepseek_ai_for_suite(meta, holder, insured, master_text, clause_text="
     api_url = f"{config.get('aiApiUrl', 'https://api.deepseek.com/v1').rstrip('/')}/chat/completions"
     model = config.get("aiModel", "deepseek-chat")
 
-    system_prompt = """你是一位资深专业的保险理赔精算与核保专家。
-你正在分析一份已经通过本地规则完全脱敏的中国大陆真实家庭医疗保险合同套件（含：电子保单凭证、条款全文、增值服务手册）。
-请严格基于保单提供的真实合同约定输出结构化的 Markdown 专家精读报告，严禁编造不存在的责任。
+    system_prompt = """你是一位精通中国保险法律与理赔实务的资深保险理赔精算专家。
+请根据用户提供的【已脱敏保单凭证、适用条款与增值服务手册】，为保单持有人撰写一份兼具专业深度与极高通俗易懂度的《大模型条款深度研读与理赔指南》。
 
-输出结构必须包含：
-1. 🛡️ 核心保障范围与阶梯报销标准
-   - 用清晰表格列出：各项责任（一般医疗 300万、重疾医疗 300万、质子重离子 100万、异地转诊 5000元）
-   - 重点明确：免赔额（0免赔）、医保就诊结算比例（1万以内30%，1万以上100%）、未以医保结算比例（1万以内不予给付，1万以上60%）
+必须覆盖以下五大核心模块：
+1. 🛡️ 核心保障利益与阶梯报销/给付规则
+   - 清晰梳理各项保险责任、保额、免赔额、给付或报销比例（如医保结算与未结算比例差异）。
 2. ⚠️ 免除责任与暗坑排雷
-   - 就医医院等级限制（二级及以上公立医院普通部；质子重离子仅限上海质子重离子医院）
-   - 既往症约定、免责常见情形（生育、整容、高风险运动等）
-   - 等待期约定（一般为 30 天，意外伤害无等待期）
-3. 🎖️ 人员身份与特殊理赔材料清单（特别约定重中之重）
-   - 投保人与被保险人关系特别说明（投保人为本人，被保险人为其子女）
-   - 退役军人/优待证核验要求（退役军人优待证、家属关系证明如户口本/出生证）
-   - 出险报案时效与必备单证
-4. 🎁 增值权益与服务极速兑现通道
-   - 门诊就医绿通服务细则（三甲医院门诊预约 1 次，5 个工作日内安排）
-   - 申请途径（“老兵全年医疗费用保险中心”微信公众号或 400-6215-166）
+   - 就医医院等级限制（公立普通部/特需限制等）、等待期约定、既往症除外及核心免责条款。
+3. 🎖️ 人员身份与特殊理赔材料清单
+   - 投保人与被保险人关系证明（如户口本、出生医学证明等）、出险报案时效与必备单证。
+4. 🎁 增值权益与服务兑现通道（如有）
+   - 就医绿通、费用垫付、多学科会诊等增值服务申请流程与联系方式。
 5. 🎯 一句话理赔极简口诀
-   - 用通俗直白的大白话总结：给家长的一键理赔指南（什么情况、去什么医院、准备什么证明、能报多少钱）"""
+   - 用通俗直白的大白话总结理赔要点（什么情况、去什么医院、准备什么材料、能报销或赔付多少）。"""
 
     user_prompt = f"""【保单核心参数】：
 - 产品名称：{meta['product_name']}
@@ -641,7 +634,7 @@ tags:
 </details>
 
 <details>
-<summary>展开查看：【适用条款】《个人医疗保险（惠军项目专属）（互联网专属）条款》全文存档（已脱敏）</summary>
+<summary>展开查看：【适用条款】适用条款全文存档（已脱敏）</summary>
 
 ```text
 {clause_full}
@@ -649,7 +642,7 @@ tags:
 </details>
 
 <details>
-<summary>展开查看：【增值服务】《增值服务手册》（门诊绿通/住院垫付）全文存档（已脱敏）</summary>
+<summary>展开查看：【增值服务】增值服务手册全文存档（已脱敏）</summary>
 
 ```text
 {value_added_full}
@@ -761,7 +754,7 @@ def scan_and_bundle_suites(pdf_dir=PDF_DIR):
                 m_pages = extract_pdf_pages(m)
                 m_text = "".join(m_pages[:3])
                 for c in clauses:
-                    if c.stem in m_text or "8061019" in c.name:
+                    if c.stem.lower() in m_text.lower() or (len(c.stem) >= 4 and c.stem in m_text):
                         matched_clause = c
                         break
                 for v in value_addeds:
@@ -775,7 +768,7 @@ def scan_and_bundle_suites(pdf_dir=PDF_DIR):
                 "value_added": matched_val
             })
     else:
-        # 没有检测出 master 时，兜底将最大的视为条款
+        # 没有检测出 master 时，兜底单独处理
         for p in all_pdfs:
             suites.append({"master": p, "clause": None, "value_added": None})
 
@@ -783,21 +776,20 @@ def scan_and_bundle_suites(pdf_dir=PDF_DIR):
 
 def clean_redundant_notes():
     """
-    清理之前错误拆分的废弃占位笔记
+    清理无效或空保额的废弃占位笔记
     """
-    targets = [
-        OUTPUT_BASE / "医疗险" / "医疗险-个人医疗保险（惠军项目专属）.md",
-        OUTPUT_BASE / "增值权益与服务" / "增值权益与服务-退役军人家庭-全年医疗费用保险卡（尊享版）电子保险单.md",
-        OUTPUT_BASE / "增值权益与服务" / "增值权益与服务-被保险人初次罹患本服务约定的重大疾病，可申请三甲医院的门诊预约服务1 次。为被保.md",
-        OUTPUT_BASE / "增值权益与服务" / "增值权益与服务-退役军人家庭医疗卡增值服务手册.md",
-    ]
-    for t in targets:
-        if t.exists():
-            try:
-                t.unlink()
-                print(f"🗑️ 已清理历史废弃笔记: {t.relative_to(VAULT_DIR)}")
-            except Exception:
-                pass
+    if not OUTPUT_BASE.exists():
+        return
+    for n in OUTPUT_BASE.rglob("*.md"):
+        if "示例-" in n.name:
+            continue
+        try:
+            content = n.read_text(encoding="utf-8")
+            if "sum_insured: 0" in content and "annual_premium: 0" in content:
+                n.unlink()
+                print(f"🗑️ 已清理无效占位笔记: {n.relative_to(VAULT_DIR)}")
+        except Exception:
+            pass
 
 def update_kanban_board():
     """
