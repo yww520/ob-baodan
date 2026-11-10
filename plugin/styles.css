@@ -1,0 +1,330 @@
+/* ==========================================================================
+   🛡️ 保单 AI 助手与智能追问 (Baodan AI Plugin) 样式表
+   ========================================================================== */
+
+/* 1. 笔记内置交互卡片 (Inline Code Block Widget) */
+.baodan-ai-box {
+  background: var(--background-secondary);
+  border: 1px solid var(--interactive-accent);
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin: 14px 0 18px 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.baodan-ai-header {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text-normal);
+}
+
+.baodan-ai-icon {
+  font-size: 18px;
+  margin-right: 8px;
+}
+
+.baodan-ai-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.baodan-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.baodan-ai-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.baodan-ai-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.baodan-btn-secondary {
+  background-color: var(--background-modifier-border);
+  color: var(--text-normal);
+}
+
+.baodan-btn-secondary:hover:not(:disabled) {
+  background-color: var(--background-modifier-hover);
+}
+
+.baodan-ai-status {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+/* 2. 内置追问组件 (Inline QA Box) */
+.baodan-inline-qa-box {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--background-modifier-border);
+}
+
+.baodan-qa-title {
+  font-size: 13.5px;
+  color: var(--text-normal);
+  margin-bottom: 8px;
+}
+
+.baodan-qa-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: normal;
+  margin-left: 6px;
+}
+
+.baodan-quick-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.baodan-quick-pill {
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 14px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.baodan-quick-pill:hover {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+  transform: scale(1.02);
+}
+
+.baodan-qa-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.baodan-qa-input {
+  flex: 1;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 50px;
+}
+
+.baodan-qa-input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.baodan-ask-btn {
+  height: 48px;
+  padding: 0 16px;
+  white-space: nowrap;
+}
+
+.baodan-qa-result {
+  margin-top: 12px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-left: 4px solid var(--interactive-accent);
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+.baodan-result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.baodan-save-inline-btn {
+  background: transparent;
+  border: 1px solid var(--interactive-accent);
+  color: var(--interactive-accent);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.baodan-save-inline-btn:hover:not(:disabled) {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.baodan-answer-content {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-normal);
+}
+
+/* 3. 右侧 AI 追问独立侧边栏视图 (Side Panel View) */
+.baodan-chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px;
+  background: var(--background-secondary);
+}
+
+.baodan-chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.baodan-chat-title-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.baodan-chat-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.baodan-icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+
+.baodan-icon-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.baodan-messages-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.baodan-bubble {
+  max-width: 90%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.baodan-bubble.is-user {
+  align-self: flex-end;
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-bottom-right-radius: 2px;
+}
+
+.baodan-bubble.is-assistant {
+  align-self: flex-start;
+  background-color: var(--background-primary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-bottom-left-radius: 2px;
+}
+
+.baodan-bubble-meta {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+.baodan-input-area {
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.baodan-chat-textarea {
+  width: 100%;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: none;
+  height: 60px;
+}
+
+.baodan-chat-textarea:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.baodan-input-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.baodan-input-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.baodan-send-btn {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: 4px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.baodan-send-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}

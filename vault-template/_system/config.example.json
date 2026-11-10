@@ -1,0 +1,7 @@
+{
+  "aiApiUrl": "https://api.deepseek.com/v1",
+  "aiApiKey": "sk-your-deepseek-api-key-here",
+  "aiModel": "deepseek-chat",
+  "temperature": 0.2,
+  "maxTokens": 4000
+}

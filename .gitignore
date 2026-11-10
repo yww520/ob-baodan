@@ -1,0 +1,22 @@
+# 隐私与敏感数据严格保护 (绝不上传真实个人保单与映射关系)
+*.pdf
+02_原始保单_PDF/*
+!02_原始保单_PDF/.gitkeep
+policy_secret_mapping.json
+config.json
+data.json
+
+# 系统与环境
+.DS_Store
+*.pyc
+__pycache__/
+*.log
+
+# Node & Build
+node_modules/
+dist/
+
+# Obsidian 本地临时缓存
+.obsidian/workspace*
+.obsidian/cache*
+.obsidian/indexed-db/

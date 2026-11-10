@@ -1,0 +1,9 @@
+{
+  "id": "baodan-ai",
+  "name": "保单 AI 助手 (Baodan AI)",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "专为全家保单管理打造的本地隐私脱敏与 DeepSeek AI 条款精读助手，支持一键解读、免责排雷与理赔分析。",
+  "author": "Benyson",
+  "isDesktopOnly": false
+}
