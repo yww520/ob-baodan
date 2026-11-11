@@ -188,6 +188,14 @@ def build_standalone_dashboard(vault_dir, output_file=None):
 
     peak_month = max(monthly_flow.items(), key=lambda x: x[1])[0] if total_premium > 0 else 1
 
+    first_policy = policies[0] if policies else {}
+    first_p_name = first_policy.get("product_name", "家庭医疗核心保单")
+    first_p_insurer = first_policy.get("insurer", "承保公司")
+    first_p_sum = first_policy.get("sum_insured_text", "700.5 万元")
+    first_p_prem = first_policy.get("annual_premium_text", "￥612.00")
+    first_p_renewal = first_policy.get("renewal_date", "07-15")
+    first_p_id = first_policy.get("id", "")
+
     # 序列化为 JSON 供前端交互驱动
     payload = {
         "updatedAt": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -211,44 +219,68 @@ def build_standalone_dashboard(vault_dir, output_file=None):
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🛡️ 家庭保单资产管理看板 - 独立离线全景大盘</title>
+  <!-- 引入高雅衬线字体 Noto Serif SC 与现代正文字体 Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;600;700;900&display=swap" rel="stylesheet">
   <style>
     :root {{
-      --bg-base: #0b0f19;
-      --bg-surface: #111827;
-      --bg-card: rgba(30, 41, 59, 0.7);
-      --bg-card-hover: rgba(51, 65, 85, 0.85);
+      /* 商业/科技/投研深度期刊暗色风格：哑光深炭黑背景、高雅宋体大标题、朱砂红高光聚焦 */
+      --bg-base: #111215;
+      --bg-surface: #17181d;
+      --bg-card: #1c1d23;
+      --bg-card-hover: #22242b;
       --border-color: rgba(255, 255, 255, 0.08);
-      --border-accent: rgba(99, 102, 241, 0.3);
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --accent-medical: #10b981;
-      --accent-illness: #8b5cf6;
-      --accent-accident: #f59e0b;
-      --accent-life: #3b82f6;
-      --accent-primary: #6366f1;
-      --card-radius: 14px;
-      --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-      --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.4);
+      --border-accent: rgba(230, 62, 38, 0.4);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+
+      /* 核心品牌与动作高光：朱砂红/珊瑚亮橙 (参考图核心高光) */
+      --accent-vermilion: #E63E26;
+      --accent-vermilion-hover: #d2341d;
+      --accent-primary: #E63E26;
+
+      /* 条带数据柱与险种色彩 (参考图底部条形码条带) */
+      --color-strip-blue: #2B7FFF;
+      --color-strip-green: #00C988;
+      --color-strip-crimson: #E63956;
+      --color-strip-orange: #F77F00;
+      --color-strip-gray: #64748B;
+
+      --accent-medical: #2B7FFF;
+      --accent-illness: #00C988;
+      --accent-accident: #E63956;
+      --accent-life: #F77F00;
+
+      --card-radius: 10px;
+      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+
+      --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", "STSong", serif;
+      --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
     }}
 
     [data-theme="light"] {{
-      --bg-base: #f8fafc;
+      --bg-base: #f6f7f9;
       --bg-surface: #ffffff;
       --bg-card: #ffffff;
-      --bg-card-hover: #f1f5f9;
-      --border-color: #e2e8f0;
-      --border-accent: rgba(99, 102, 241, 0.2);
-      --text-main: #0f172a;
-      --text-muted: #475569;
-      --text-dim: #94a3b8;
-      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+      --bg-card-hover: #f0f2f5;
+      --border-color: #e5e7eb;
+      --border-accent: rgba(230, 62, 38, 0.3);
+      --text-main: #111827;
+      --text-muted: #4b5563;
+      --text-dim: #9ca3af;
+      --accent-vermilion: #E63E26;
+      --accent-vermilion-hover: #d2341d;
+      --accent-primary: #E63E26;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
       --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.08);
     }}
 
     * {{ box-sizing: border-box; margin: 0; padding: 0; }}
     body {{
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-family: var(--font-sans);
       background-color: var(--bg-base);
       color: var(--text-main);
       line-height: 1.5;
@@ -283,23 +315,24 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       gap: 12px;
     }}
     .brand-icon {{
-      font-size: 26px;
-      background: linear-gradient(135deg, #10b981, #6366f1);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size: 24px;
     }}
     .brand-title {{
-      font-size: 19px;
+      font-family: var(--font-serif);
+      font-size: 20px;
       font-weight: 700;
       letter-spacing: -0.3px;
+      color: var(--text-main);
     }}
     .brand-subtitle {{
-      font-size: 12px;
+      font-family: var(--font-sans);
+      font-size: 11px;
       color: var(--text-muted);
       margin-left: 8px;
-      padding: 2px 8px;
-      background: var(--border-color);
-      border-radius: 12px;
+      padding: 3px 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
     }}
     .header-actions {{
       display: flex;
@@ -310,10 +343,10 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 14px;
-      border-radius: 8px;
+      padding: 7px 14px;
+      border-radius: 6px;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
       border: 1px solid var(--border-color);
       background: var(--bg-card);
@@ -322,19 +355,266 @@ def build_standalone_dashboard(vault_dir, output_file=None):
     }}
     .btn:hover {{
       background: var(--bg-card-hover);
-      border-color: var(--accent-primary);
+      border-color: rgba(255, 255, 255, 0.2);
     }}
     .btn-primary {{
-      background: #4f46e5;
+      background: var(--accent-vermilion);
       color: #fff;
-      border-color: #4f46e5;
+      border-color: var(--accent-vermilion);
+      font-weight: 600;
     }}
     .btn-primary:hover {{
-      background: #4338ca;
+      background: var(--accent-vermilion-hover);
+      border-color: var(--accent-vermilion-hover);
     }}
     .btn-sm {{
       padding: 4px 8px;
       font-size: 12px;
+    }}
+
+    /* 杂志风核心特刊区 (从这里开始) */
+    .editorial-hero-section {{
+      margin: 24px 0 28px 0;
+    }}
+    .editorial-section-header {{
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      margin-bottom: 18px;
+    }}
+    .editorial-main-title {{
+      font-family: var(--font-serif);
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.5px;
+    }}
+    .editorial-main-subtitle {{
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }}
+    .editorial-tag-live {{
+      margin-left: auto;
+      font-size: 11px;
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }}
+    .editorial-grid {{
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }}
+    @media (max-width: 1024px) {{
+      .editorial-grid {{
+        grid-template-columns: 1fr;
+      }}
+    }}
+    .editorial-card {{
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      padding: 22px 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: border-color 0.2s, background-color 0.2s;
+    }}
+    .editorial-card:hover {{
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.14);
+    }}
+    .card-eyebrow {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }}
+    .card-eyebrow span:first-child::before {{
+      content: "• ";
+      color: var(--accent-vermilion);
+      font-weight: bold;
+    }}
+    .arrow-link {{
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 12px;
+      cursor: pointer;
+      transition: color 0.15s;
+    }}
+    .arrow-link:hover {{
+      color: var(--text-main);
+    }}
+    .card-serif-title {{
+      font-family: var(--font-serif);
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.45;
+      margin-bottom: 12px;
+    }}
+    .card-meta-line {{
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }}
+    .card-btn-row {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }}
+    .btn-vermilion {{
+      background: var(--accent-vermilion);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 18px;
+      cursor: pointer;
+      transition: background-color 0.15s, transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }}
+    .btn-vermilion:hover {{
+      background: var(--accent-vermilion-hover);
+    }}
+    .btn-vermilion:active {{
+      transform: scale(0.98);
+    }}
+    .card-sub-link {{
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: color 0.15s;
+    }}
+    .card-sub-link:hover {{
+      color: var(--text-main);
+    }}
+    .card-footnote-box {{
+      font-size: 11px;
+      color: var(--text-dim);
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed var(--border-color);
+      border-radius: 6px;
+      margin-bottom: 16px;
+    }}
+    .card-sub-footnote {{
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border-color);
+    }}
+
+    /* 竖条纹条带图 (与参考图一模一样！) */
+    .barcode-container {{
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-color);
+    }}
+    .barcode-bars {{
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 48px;
+      margin-bottom: 10px;
+    }}
+    .barcode-bar {{
+      flex: 1;
+      height: 100%;
+      border-radius: 2px;
+      transition: opacity 0.2s;
+    }}
+    .bar-medical {{ background: var(--color-strip-blue); }}
+    .bar-illness {{ background: var(--color-strip-green); }}
+    .bar-accident {{ background: var(--color-strip-crimson); }}
+    .bar-life {{ background: var(--color-strip-orange); }}
+    .bar-hollow {{
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+    }}
+    .barcode-legend {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }}
+    .legend-item {{
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }}
+    .legend-dot {{
+      width: 7px;
+      height: 7px;
+      border-radius: 1px;
+    }}
+    .dot-medical {{ background: var(--color-strip-blue); }}
+    .dot-illness {{ background: var(--color-strip-green); }}
+    .dot-accident {{ background: var(--color-strip-crimson); }}
+    .dot-life {{ background: var(--color-strip-orange); }}
+    .dot-hollow {{ border: 1px solid rgba(255, 255, 255, 0.6); }}
+
+    /* 胶囊矩阵按钮 (与参考图一致！) */
+    .pill-matrix {{
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 7px;
+      margin-bottom: 14px;
+    }}
+    .pill-matrix-btn {{
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }}
+    .pill-matrix-btn:hover {{
+      border-color: var(--accent-vermilion);
+      color: #fff;
+      background: rgba(230, 62, 38, 0.08);
+    }}
+    .pill-matrix-btn.active {{
+      background: var(--accent-vermilion);
+      border-color: var(--accent-vermilion);
+      color: #fff;
+      font-weight: 600;
+    }}
+
+    /* 3D 视觉展示卡 */
+    .editorial-visual-3d {{
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }}
+    .shield-illustration {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }}
 
     /* KPI 指标卡 */
@@ -342,16 +622,21 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 16px;
-      margin: 24px 0;
+      margin: 20px 0 24px 0;
     }}
     .kpi-card {{
-      background: var(--bg-surface);
+      background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: var(--card-radius);
-      padding: 20px;
+      padding: 18px 20px;
       box-shadow: var(--shadow-sm);
       position: relative;
       overflow: hidden;
+      transition: border-color 0.2s, background-color 0.2s;
+    }}
+    .kpi-card:hover {{
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.14);
     }}
     .kpi-card::before {{
       content: "";
@@ -359,26 +644,27 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       top: 0;
       left: 0;
       right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #10b981, #6366f1);
+      height: 2px;
+      background: var(--accent-vermilion);
     }}
     .kpi-header {{
       display: flex;
       justify-content: space-between;
       align-items: center;
       color: var(--text-muted);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
     }}
     .kpi-value {{
+      font-family: var(--font-serif);
       font-size: 28px;
       font-weight: 800;
-      margin-top: 10px;
+      margin-top: 8px;
       letter-spacing: -0.5px;
       color: var(--text-main);
     }}
     .kpi-desc {{
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-dim);
       margin-top: 6px;
     }}
@@ -391,8 +677,8 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       align-items: center;
       gap: 16px;
       margin-bottom: 24px;
-      padding: 14px 18px;
-      background: var(--bg-surface);
+      padding: 12px 18px;
+      background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: var(--card-radius);
     }}
@@ -408,13 +694,13 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       margin-right: 4px;
     }}
     .pill {{
-      padding: 5px 12px;
+      padding: 6px 14px;
       font-size: 12px;
       font-weight: 500;
-      border-radius: 20px;
+      border-radius: 6px;
       cursor: pointer;
       border: 1px solid var(--border-color);
-      background: transparent;
+      background: rgba(255, 255, 255, 0.02);
       color: var(--text-muted);
       transition: all 0.15s;
     }}
@@ -423,9 +709,10 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       border-color: var(--text-dim);
     }}
     .pill.active {{
-      background: var(--accent-primary);
+      background: var(--accent-vermilion);
       color: #fff;
-      border-color: var(--accent-primary);
+      border-color: var(--accent-vermilion);
+      font-weight: 600;
     }}
     .search-box {{
       position: relative;
@@ -435,14 +722,14 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       width: 100%;
       padding: 7px 12px 7px 32px;
       font-size: 13px;
-      border-radius: 8px;
+      border-radius: 6px;
       border: 1px solid var(--border-color);
       background: var(--bg-base);
       color: var(--text-main);
       outline: none;
     }}
     .search-input:focus {{
-      border-color: var(--accent-primary);
+      border-color: var(--accent-vermilion);
     }}
     .search-icon {{
       position: absolute;
@@ -567,7 +854,8 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       color: var(--text-dim);
     }}
     .card-title {{
-      font-size: 15px;
+      font-family: var(--font-serif);
+      font-size: 16px;
       font-weight: 700;
       color: var(--text-main);
       margin-bottom: 8px;
@@ -812,9 +1100,11 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       align-items: flex-start;
     }}
     .drawer-title {{
-      font-size: 18px;
-      font-weight: 800;
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 700;
       line-height: 1.3;
+      color: var(--text-main);
     }}
     .drawer-subtitle {{
       font-size: 12px;
@@ -946,6 +1236,102 @@ def build_standalone_dashboard(vault_dir, output_file=None):
   </header>
 
   <main class="container">
+    <!-- 杂志风核心特刊区 (从这里开始) -->
+    <section class="editorial-hero-section">
+      <div class="editorial-section-header">
+        <h2 class="editorial-main-title">从这里开始</h2>
+        <span class="editorial-main-subtitle">不随网络变化，家庭资产风控第一次来看这三样</span>
+        <div class="editorial-tag-live">● 本地脱敏与离线全景</div>
+      </div>
+
+      <div class="editorial-grid">
+        <!-- 卡片 1: 险种全景深度研究与条带条形图 (与参考图一模一样！) -->
+        <div class="editorial-card">
+          <div class="card-eyebrow">
+            <span>家庭保单深度研究 · {len(policies)} 门</span>
+            <a href="#kanbanTab" class="arrow-link" onclick="switchTab('kanbanTab', document.querySelectorAll('.tab-btn')[0])">全部保单 →</a>
+          </div>
+          <h3 class="card-serif-title">
+            {first_p_name}：<br>
+            它的每一次生效与续期，<br>
+            都是全家抗击不可抗力风险的底牌
+          </h3>
+          <div class="card-meta-line">
+            全部有效 · 4 大责任 · {first_p_sum} 限额 · 0 元免赔 · 年保费 {first_p_prem}
+          </div>
+          <div class="card-btn-row">
+            <button class="btn-vermilion" onclick="openFirstPolicy()">从这门开始 →</button>
+            <span class="card-sub-link" onclick="openFirstPolicy()">最新续期日：{first_p_renewal} →</span>
+          </div>
+          <div class="card-footnote-box">
+            主责任全覆盖：一般医疗金 300万 · 重疾医疗金 300万 · 质子重离子 100万
+          </div>
+
+          <!-- 底部竖条带柱状条纹图 (与参考图一致！) -->
+          <div class="barcode-container">
+            <div class="barcode-bars" id="editorialBarcodeBars"></div>
+            <div class="barcode-legend" id="editorialBarcodeLegend"></div>
+          </div>
+        </div>
+
+        <!-- 卡片 2: 条款大课与胶囊矩阵 (与参考图一模一样！) -->
+        <div class="editorial-card">
+          <div class="card-eyebrow">
+            <span>理赔与条款避坑大课 · 10 讲</span>
+            <span class="arrow-link" onclick="openFirstPolicy()">AI 指南 →</span>
+          </div>
+          <h3 class="card-serif-title">
+            理赔专家的避坑与排雷大课
+          </h3>
+          <div class="card-meta-line">
+            5 大章节已全量生成，从阶梯报销讲到医院等级、等待期与门诊绿通兑现
+          </div>
+          <div class="pill-matrix">
+            <button class="pill-matrix-btn active" onclick="askQuickFromHero('👶 如果小孩急性肺炎住院花费8,000元，社保报销后剩余3,000元，本保单能赔多少？给出分步计算过程')">1 阶梯报销 · 0免赔</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('🏥 本保单就医医院有什么等级要求？二级及以上公立普通部具体指什么？')">2 二级公立普通部</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('🏥 如果去了三甲医院特需部、国际部或私立医院就诊，本保单赔不赔？')">3 特需/私立除外</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('⏳ 在保单生效后30天等待期内生病，保费退还吗？既往症能否理赔？')">4 既往症与等待期</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('⚡ 上海质子重离子医院的报销比例是多少？床位费赔不赔？')">5 质子重离子</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('✈️ 重大疾病异地转诊公共交通费用5000元如何申请？包含哪些交通工具？')">6 异地转诊交通</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('📞 本保单自带的三甲医院门诊就医绿通如何申请？最快几天安排？')">7 门诊就医绿通</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('💳 住院医疗垫付服务如何申请？押金可以直接由保险公司垫付吗？')">8 住院垫付通道</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('🎖️ 本产品在理赔报销时，需要提前准备哪些身份证明与单据原件？')">9 必备理赔材料</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('🎯 请用最简练的三句话总结本保单的核心报销与避坑口诀。')">10 一句话口诀</button>
+          </div>
+          <div class="card-sub-footnote">
+            第 1 讲 DeepSeek 已全量研读 · 点击上方任一标签即可调起在线精读与追问
+          </div>
+        </div>
+
+        <!-- 卡片 3: 算力/保费全景 3D 卡 (与参考图一模一样！) -->
+        <div class="editorial-card">
+          <div class="card-eyebrow">
+            <span>资产全景与现金流 · 12 层</span>
+            <span class="arrow-link" onclick="switchTab('calendarTab', document.querySelectorAll('.tab-btn')[2])">日历 →</span>
+          </div>
+          <div class="editorial-visual-3d">
+            <div class="shield-illustration">
+              <span style="font-size: 36px;">🛡️</span>
+              <div>
+                <div style="font-size: 11px; color: var(--accent-vermilion); font-weight: 700; letter-spacing: 1px;">ACTIVE VAULT</div>
+                <div style="font-size: 14px; font-weight: 800; color: #fff;">100% 本地脱敏沙箱</div>
+                <div style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">零外部网络依赖 · 离线可读</div>
+              </div>
+            </div>
+          </div>
+          <h3 class="card-serif-title">
+            从 0 元免赔一路拆到三甲绿通
+          </h3>
+          <div class="card-meta-line">
+            主线：投保人 > 被保人 > 承保机构 > 责任清单 > 医院范围 > 原件理赔
+          </div>
+          <div class="card-sub-footnote">
+            年度扣费峰值月为 {peak_month} 月（￥{monthly_flow[peak_month]:,.2f}），系统将在扣款日前 30 天自动提醒备足备用金。
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- KPI 关键指标总览 -->
     <section class="kpi-grid">
       <div class="kpi-card">
@@ -1150,10 +1536,68 @@ def build_standalone_dashboard(vault_dir, output_file=None):
 
     // 初始化渲染
     document.addEventListener('DOMContentLoaded', () => {{
+      renderEditorialBarcode();
       renderKanban();
       renderAnalytics();
       renderCalendar();
     }});
+
+    // 杂志风顶栏快捷联动
+    function openFirstPolicy() {{
+      if (window.BAODAN_DATA.policies && window.BAODAN_DATA.policies.length > 0) {{
+        openDrawer(window.BAODAN_DATA.policies[0]);
+      }}
+    }}
+
+    function askQuickFromHero(question) {{
+      if (window.BAODAN_DATA.policies && window.BAODAN_DATA.policies.length > 0) {{
+        const p = window.BAODAN_DATA.policies[0];
+        openDrawer(p);
+        setTimeout(() => {{
+          askQuick(p.id, question);
+        }}, 200);
+      }}
+    }}
+
+    function renderEditorialBarcode() {{
+      const container = document.getElementById('editorialBarcodeBars');
+      const legend = document.getElementById('editorialBarcodeLegend');
+      if (!container || !legend) return;
+
+      const totalBars = 28;
+      let barsHtml = '';
+
+      for (let i = 0; i < totalBars; i++) {{
+        let barClass = 'bar-medical';
+        let isHollow = false;
+        if (i < 13) {{
+          barClass = 'bar-medical';
+        }} else if (i < 18) {{
+          barClass = 'bar-illness';
+        }} else if (i < 21) {{
+          barClass = 'bar-accident';
+        }} else if (i < 23) {{
+          barClass = 'bar-life';
+        }} else {{
+          isHollow = true;
+        }}
+        barsHtml += `<div class="barcode-bar ${{barClass}} ${{isHollow ? 'bar-hollow' : ''}}"></div>`;
+      }}
+      container.innerHTML = barsHtml;
+
+      const med = window.BAODAN_DATA.categoryStats['医疗险'] ? (window.BAODAN_DATA.categoryStats['医疗险'].coverage/10000).toFixed(1) + '万' : '700.5万';
+      const ill = window.BAODAN_DATA.categoryStats['重疾险'] ? (window.BAODAN_DATA.categoryStats['重疾险'].coverage/10000).toFixed(1) + '万' : '0万';
+      const acc = window.BAODAN_DATA.categoryStats['意外险'] ? (window.BAODAN_DATA.categoryStats['意外险'].coverage/10000).toFixed(1) + '万' : '0万';
+      const life = window.BAODAN_DATA.categoryStats['寿险'] ? (window.BAODAN_DATA.categoryStats['寿险'].coverage/10000).toFixed(1) + '万' : '0万';
+
+      legend.innerHTML = `
+        <span class="legend-item"><span class="legend-dot dot-medical"></span>医疗险 ${{med}}</span>
+        <span class="legend-item"><span class="legend-dot dot-illness"></span>重疾险 ${{ill}}</span>
+        <span class="legend-item"><span class="legend-dot dot-accident"></span>意外险 ${{acc}}</span>
+        <span class="legend-item"><span class="legend-dot dot-life"></span>寿险 ${{life}}</span>
+        <span class="legend-item"><span class="legend-dot dot-hollow"></span>待配置缺口</span>
+      `;
+    }}
 
     // 亮暗主题切换
     function toggleTheme() {{

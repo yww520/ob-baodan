@@ -4,44 +4,68 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🛡️ 家庭保单资产管理看板 - 独立离线全景大盘</title>
+  <!-- 引入高雅衬线字体 Noto Serif SC 与现代正文字体 Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;600;700;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-base: #0b0f19;
-      --bg-surface: #111827;
-      --bg-card: rgba(30, 41, 59, 0.7);
-      --bg-card-hover: rgba(51, 65, 85, 0.85);
+      /* 商业/科技/投研深度期刊暗色风格：哑光深炭黑背景、高雅宋体大标题、朱砂红高光聚焦 */
+      --bg-base: #111215;
+      --bg-surface: #17181d;
+      --bg-card: #1c1d23;
+      --bg-card-hover: #22242b;
       --border-color: rgba(255, 255, 255, 0.08);
-      --border-accent: rgba(99, 102, 241, 0.3);
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --accent-medical: #10b981;
-      --accent-illness: #8b5cf6;
-      --accent-accident: #f59e0b;
-      --accent-life: #3b82f6;
-      --accent-primary: #6366f1;
-      --card-radius: 14px;
-      --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-      --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.4);
+      --border-accent: rgba(230, 62, 38, 0.4);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+
+      /* 核心品牌与动作高光：朱砂红/珊瑚亮橙 (参考图核心高光) */
+      --accent-vermilion: #E63E26;
+      --accent-vermilion-hover: #d2341d;
+      --accent-primary: #E63E26;
+
+      /* 条带数据柱与险种色彩 (参考图底部条形码条带) */
+      --color-strip-blue: #2B7FFF;
+      --color-strip-green: #00C988;
+      --color-strip-crimson: #E63956;
+      --color-strip-orange: #F77F00;
+      --color-strip-gray: #64748B;
+
+      --accent-medical: #2B7FFF;
+      --accent-illness: #00C988;
+      --accent-accident: #E63956;
+      --accent-life: #F77F00;
+
+      --card-radius: 10px;
+      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+
+      --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", "STSong", serif;
+      --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
     }
 
     [data-theme="light"] {
-      --bg-base: #f8fafc;
+      --bg-base: #f6f7f9;
       --bg-surface: #ffffff;
       --bg-card: #ffffff;
-      --bg-card-hover: #f1f5f9;
-      --border-color: #e2e8f0;
-      --border-accent: rgba(99, 102, 241, 0.2);
-      --text-main: #0f172a;
-      --text-muted: #475569;
-      --text-dim: #94a3b8;
-      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+      --bg-card-hover: #f0f2f5;
+      --border-color: #e5e7eb;
+      --border-accent: rgba(230, 62, 38, 0.3);
+      --text-main: #111827;
+      --text-muted: #4b5563;
+      --text-dim: #9ca3af;
+      --accent-vermilion: #E63E26;
+      --accent-vermilion-hover: #d2341d;
+      --accent-primary: #E63E26;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
       --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.08);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-family: var(--font-sans);
       background-color: var(--bg-base);
       color: var(--text-main);
       line-height: 1.5;
@@ -76,23 +100,24 @@
       gap: 12px;
     }
     .brand-icon {
-      font-size: 26px;
-      background: linear-gradient(135deg, #10b981, #6366f1);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size: 24px;
     }
     .brand-title {
-      font-size: 19px;
+      font-family: var(--font-serif);
+      font-size: 20px;
       font-weight: 700;
       letter-spacing: -0.3px;
+      color: var(--text-main);
     }
     .brand-subtitle {
-      font-size: 12px;
+      font-family: var(--font-sans);
+      font-size: 11px;
       color: var(--text-muted);
       margin-left: 8px;
-      padding: 2px 8px;
-      background: var(--border-color);
-      border-radius: 12px;
+      padding: 3px 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
     }
     .header-actions {
       display: flex;
@@ -103,10 +128,10 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 14px;
-      border-radius: 8px;
+      padding: 7px 14px;
+      border-radius: 6px;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
       border: 1px solid var(--border-color);
       background: var(--bg-card);
@@ -115,19 +140,266 @@
     }
     .btn:hover {
       background: var(--bg-card-hover);
-      border-color: var(--accent-primary);
+      border-color: rgba(255, 255, 255, 0.2);
     }
     .btn-primary {
-      background: #4f46e5;
+      background: var(--accent-vermilion);
       color: #fff;
-      border-color: #4f46e5;
+      border-color: var(--accent-vermilion);
+      font-weight: 600;
     }
     .btn-primary:hover {
-      background: #4338ca;
+      background: var(--accent-vermilion-hover);
+      border-color: var(--accent-vermilion-hover);
     }
     .btn-sm {
       padding: 4px 8px;
       font-size: 12px;
+    }
+
+    /* 杂志风核心特刊区 (从这里开始) */
+    .editorial-hero-section {
+      margin: 24px 0 28px 0;
+    }
+    .editorial-section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .editorial-main-title {
+      font-family: var(--font-serif);
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.5px;
+    }
+    .editorial-main-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+    .editorial-tag-live {
+      margin-left: auto;
+      font-size: 11px;
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .editorial-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 1024px) {
+      .editorial-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .editorial-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      padding: 22px 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+    .editorial-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.14);
+    }
+    .card-eyebrow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+    .card-eyebrow span:first-child::before {
+      content: "• ";
+      color: var(--accent-vermilion);
+      font-weight: bold;
+    }
+    .arrow-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 12px;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    .arrow-link:hover {
+      color: var(--text-main);
+    }
+    .card-serif-title {
+      font-family: var(--font-serif);
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.45;
+      margin-bottom: 12px;
+    }
+    .card-meta-line {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .card-btn-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .btn-vermilion {
+      background: var(--accent-vermilion);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 18px;
+      cursor: pointer;
+      transition: background-color 0.15s, transform 0.1s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-vermilion:hover {
+      background: var(--accent-vermilion-hover);
+    }
+    .btn-vermilion:active {
+      transform: scale(0.98);
+    }
+    .card-sub-link {
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    .card-sub-link:hover {
+      color: var(--text-main);
+    }
+    .card-footnote-box {
+      font-size: 11px;
+      color: var(--text-dim);
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed var(--border-color);
+      border-radius: 6px;
+      margin-bottom: 16px;
+    }
+    .card-sub-footnote {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border-color);
+    }
+
+    /* 竖条纹条带图 (与参考图一模一样！) */
+    .barcode-container {
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-color);
+    }
+    .barcode-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 48px;
+      margin-bottom: 10px;
+    }
+    .barcode-bar {
+      flex: 1;
+      height: 100%;
+      border-radius: 2px;
+      transition: opacity 0.2s;
+    }
+    .bar-medical { background: var(--color-strip-blue); }
+    .bar-illness { background: var(--color-strip-green); }
+    .bar-accident { background: var(--color-strip-crimson); }
+    .bar-life { background: var(--color-strip-orange); }
+    .bar-hollow {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+    }
+    .barcode-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .legend-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 1px;
+    }
+    .dot-medical { background: var(--color-strip-blue); }
+    .dot-illness { background: var(--color-strip-green); }
+    .dot-accident { background: var(--color-strip-crimson); }
+    .dot-life { background: var(--color-strip-orange); }
+    .dot-hollow { border: 1px solid rgba(255, 255, 255, 0.6); }
+
+    /* 胶囊矩阵按钮 (与参考图一致！) */
+    .pill-matrix {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 7px;
+      margin-bottom: 14px;
+    }
+    .pill-matrix-btn {
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pill-matrix-btn:hover {
+      border-color: var(--accent-vermilion);
+      color: #fff;
+      background: rgba(230, 62, 38, 0.08);
+    }
+    .pill-matrix-btn.active {
+      background: var(--accent-vermilion);
+      border-color: var(--accent-vermilion);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* 3D 视觉展示卡 */
+    .editorial-visual-3d {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .shield-illustration {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     /* KPI 指标卡 */
@@ -135,16 +407,21 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 16px;
-      margin: 24px 0;
+      margin: 20px 0 24px 0;
     }
     .kpi-card {
-      background: var(--bg-surface);
+      background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: var(--card-radius);
-      padding: 20px;
+      padding: 18px 20px;
       box-shadow: var(--shadow-sm);
       position: relative;
       overflow: hidden;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+    .kpi-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.14);
     }
     .kpi-card::before {
       content: "";
@@ -152,26 +429,27 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #10b981, #6366f1);
+      height: 2px;
+      background: var(--accent-vermilion);
     }
     .kpi-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       color: var(--text-muted);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
     }
     .kpi-value {
+      font-family: var(--font-serif);
       font-size: 28px;
       font-weight: 800;
-      margin-top: 10px;
+      margin-top: 8px;
       letter-spacing: -0.5px;
       color: var(--text-main);
     }
     .kpi-desc {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-dim);
       margin-top: 6px;
     }
@@ -184,8 +462,8 @@
       align-items: center;
       gap: 16px;
       margin-bottom: 24px;
-      padding: 14px 18px;
-      background: var(--bg-surface);
+      padding: 12px 18px;
+      background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: var(--card-radius);
     }
@@ -201,13 +479,13 @@
       margin-right: 4px;
     }
     .pill {
-      padding: 5px 12px;
+      padding: 6px 14px;
       font-size: 12px;
       font-weight: 500;
-      border-radius: 20px;
+      border-radius: 6px;
       cursor: pointer;
       border: 1px solid var(--border-color);
-      background: transparent;
+      background: rgba(255, 255, 255, 0.02);
       color: var(--text-muted);
       transition: all 0.15s;
     }
@@ -216,9 +494,10 @@
       border-color: var(--text-dim);
     }
     .pill.active {
-      background: var(--accent-primary);
+      background: var(--accent-vermilion);
       color: #fff;
-      border-color: var(--accent-primary);
+      border-color: var(--accent-vermilion);
+      font-weight: 600;
     }
     .search-box {
       position: relative;
@@ -228,14 +507,14 @@
       width: 100%;
       padding: 7px 12px 7px 32px;
       font-size: 13px;
-      border-radius: 8px;
+      border-radius: 6px;
       border: 1px solid var(--border-color);
       background: var(--bg-base);
       color: var(--text-main);
       outline: none;
     }
     .search-input:focus {
-      border-color: var(--accent-primary);
+      border-color: var(--accent-vermilion);
     }
     .search-icon {
       position: absolute;
@@ -360,7 +639,8 @@
       color: var(--text-dim);
     }
     .card-title {
-      font-size: 15px;
+      font-family: var(--font-serif);
+      font-size: 16px;
       font-weight: 700;
       color: var(--text-main);
       margin-bottom: 8px;
@@ -605,9 +885,11 @@
       align-items: flex-start;
     }
     .drawer-title {
-      font-size: 18px;
-      font-weight: 800;
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 700;
       line-height: 1.3;
+      color: var(--text-main);
     }
     .drawer-subtitle {
       font-size: 12px;
@@ -739,6 +1021,102 @@
   </header>
 
   <main class="container">
+    <!-- 杂志风核心特刊区 (从这里开始) -->
+    <section class="editorial-hero-section">
+      <div class="editorial-section-header">
+        <h2 class="editorial-main-title">从这里开始</h2>
+        <span class="editorial-main-subtitle">不随网络变化，家庭资产风控第一次来看这三样</span>
+        <div class="editorial-tag-live">● 本地脱敏与离线全景</div>
+      </div>
+
+      <div class="editorial-grid">
+        <!-- 卡片 1: 险种全景深度研究与条带条形图 (与参考图一模一样！) -->
+        <div class="editorial-card">
+          <div class="card-eyebrow">
+            <span>家庭保单深度研究 · 3 门</span>
+            <a href="#kanbanTab" class="arrow-link" onclick="switchTab('kanbanTab', document.querySelectorAll('.tab-btn')[0])">全部保单 →</a>
+          </div>
+          <h3 class="card-serif-title">
+            长相安长期医疗保险(费率可调)：<br>
+            它的每一次生效与续期，<br>
+            都是全家抗击不可抗力风险的底牌
+          </h3>
+          <div class="card-meta-line">
+            全部有效 · 4 大责任 · 400.0 万元 限额 · 0 元免赔 · 年保费 ￥286.00
+          </div>
+          <div class="card-btn-row">
+            <button class="btn-vermilion" onclick="openFirstPolicy()">从这门开始 →</button>
+            <span class="card-sub-link" onclick="openFirstPolicy()">最新续期日：09-01 →</span>
+          </div>
+          <div class="card-footnote-box">
+            主责任全覆盖：一般医疗金 300万 · 重疾医疗金 300万 · 质子重离子 100万
+          </div>
+
+          <!-- 底部竖条带柱状条纹图 (与参考图一致！) -->
+          <div class="barcode-container">
+            <div class="barcode-bars" id="editorialBarcodeBars"></div>
+            <div class="barcode-legend" id="editorialBarcodeLegend"></div>
+          </div>
+        </div>
+
+        <!-- 卡片 2: 条款大课与胶囊矩阵 (与参考图一模一样！) -->
+        <div class="editorial-card">
+          <div class="card-eyebrow">
+            <span>理赔与条款避坑大课 · 10 讲</span>
+            <span class="arrow-link" onclick="openFirstPolicy()">AI 指南 →</span>
+          </div>
+          <h3 class="card-serif-title">
+            理赔专家的避坑与排雷大课
+          </h3>
+          <div class="card-meta-line">
+            5 大章节已全量生成，从阶梯报销讲到医院等级、等待期与门诊绿通兑现
+          </div>
+          <div class="pill-matrix">
+            <button class="pill-matrix-btn active" onclick="askQuickFromHero('👶 如果小孩急性肺炎住院花费8,000元，社保报销后剩余3,000元，本保单能赔多少？给出分步计算过程')">1 阶梯报销 · 0免赔</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('🏥 本保单就医医院有什么等级要求？二级及以上公立普通部具体指什么？')">2 二级公立普通部</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('🏥 如果去了三甲医院特需部、国际部或私立医院就诊，本保单赔不赔？')">3 特需/私立除外</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('⏳ 在保单生效后30天等待期内生病，保费退还吗？既往症能否理赔？')">4 既往症与等待期</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('⚡ 上海质子重离子医院的报销比例是多少？床位费赔不赔？')">5 质子重离子</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('✈️ 重大疾病异地转诊公共交通费用5000元如何申请？包含哪些交通工具？')">6 异地转诊交通</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('📞 本保单自带的三甲医院门诊就医绿通如何申请？最快几天安排？')">7 门诊就医绿通</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('💳 住院医疗垫付服务如何申请？押金可以直接由保险公司垫付吗？')">8 住院垫付通道</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('🎖️ 本产品在理赔报销时，需要提前准备哪些身份证明与单据原件？')">9 必备理赔材料</button>
+            <button class="pill-matrix-btn" onclick="askQuickFromHero('🎯 请用最简练的三句话总结本保单的核心报销与避坑口诀。')">10 一句话口诀</button>
+          </div>
+          <div class="card-sub-footnote">
+            第 1 讲 DeepSeek 已全量研读 · 点击上方任一标签即可调起在线精读与追问
+          </div>
+        </div>
+
+        <!-- 卡片 3: 算力/保费全景 3D 卡 (与参考图一模一样！) -->
+        <div class="editorial-card">
+          <div class="card-eyebrow">
+            <span>资产全景与现金流 · 12 层</span>
+            <span class="arrow-link" onclick="switchTab('calendarTab', document.querySelectorAll('.tab-btn')[2])">日历 →</span>
+          </div>
+          <div class="editorial-visual-3d">
+            <div class="shield-illustration">
+              <span style="font-size: 36px;">🛡️</span>
+              <div>
+                <div style="font-size: 11px; color: var(--accent-vermilion); font-weight: 700; letter-spacing: 1px;">ACTIVE VAULT</div>
+                <div style="font-size: 14px; font-weight: 800; color: #fff;">100% 本地脱敏沙箱</div>
+                <div style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">零外部网络依赖 · 离线可读</div>
+              </div>
+            </div>
+          </div>
+          <h3 class="card-serif-title">
+            从 0 元免赔一路拆到三甲绿通
+          </h3>
+          <div class="card-meta-line">
+            主线：投保人 > 被保人 > 承保机构 > 责任清单 > 医院范围 > 原件理赔
+          </div>
+          <div class="card-sub-footnote">
+            年度扣费峰值月为 8 月（￥5,200.00），系统将在扣款日前 30 天自动提醒备足备用金。
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- KPI 关键指标总览 -->
     <section class="kpi-grid">
       <div class="kpi-card">
@@ -934,7 +1312,7 @@
 
   <script>
     // 注入全部保单结构化数据
-    window.BAODAN_DATA = {"updatedAt": "2026-11-11 16:01:31", "totalCoverage": 5500000.0, "totalCoverageText": "550.0 万元", "totalPremium": 5774.0, "totalPremiumText": "￥5,774.00", "activeCount": 3, "overallLeverage": 952.5, "categoryStats": {"医疗险": {"premium": 286.0, "coverage": 4000000.0, "count": 1}, "意外险": {"premium": 288.0, "coverage": 1000000.0, "count": 1}, "重疾险": {"premium": 5200.0, "coverage": 500000.0, "count": 1}}, "memberStats": {"[配偶_妻子*] (配偶)": {"premium": 286.0, "coverage": 4000000.0, "count": 1}, "[投保人_张*] (本人)": {"premium": 5488.0, "coverage": 1500000.0, "count": 2}}, "monthlyFlow": {"1": 0.0, "2": 0.0, "3": 0.0, "4": 0.0, "5": 0.0, "6": 0.0, "7": 0.0, "8": 5200.0, "9": 286.0, "10": 288.0, "11": 0.0, "12": 0.0}, "peakMonth": 8, "policies": [{"id": "示例-平安长相安长期百万医疗保险", "filename": "示例-平安长相安长期百万医疗保险.md", "relative_path": "示例-平安长相安长期百万医疗保险.md", "product_name": "长相安长期医疗保险(费率可调)", "insurer": "平安健康保险股份有限公司", "category": "医疗险", "status": "保障中", "sum_insured": 4000000.0, "sum_insured_text": "400.0 万元", "annual_premium": 286.0, "annual_premium_text": "￥286.00", "leverage": 13986.0, "payment_period": "1年(保证续保20年)", "coverage_period": "1年", "effective_date": "2023-09-01", "renewal_date": "09-01", "next_payment": "2027-09-01", "policyholder": "[投保人_张*]", "insured": "[配偶_妻子*]", "relationship": "配偶", "overview": "> - **承保公司**：平安健康保险股份有限公司\n> - **险种分类**：医疗险 (百万医疗)\n> - **保障额度**：4,000,000 元（一般医疗200万 + 重疾医疗400万）\n> - **年缴保费**：￥286.00 (首期保费)\n> - **缴费期限**：1年交（保证续保20年） ｜ **保障期限**：1年\n> - **续期扣费日**：每年 `09-01`", "ai_section": "", "has_ai_report": false, "benefits_table": "", "persons_table": "", "raw_body_excerpt": "# 🛡️ 长相安长期医疗保险(费率可调)\n\n> [!NOTE] 快速概览\n> - **承保公司**：平安健康保险股份有限公司\n> - **险种分类**：医疗险 (百万医疗)\n> - **保障额度**：4,000,000 元（一般医疗200万 + 重疾医疗400万）\n> - **年缴保费**：￥286.00 (首期保费)\n> - **缴费期限**：1年交（保证续保20年） ｜ **保障期限**：1年\n> - **续期扣费日**：每年 `09-01`\n\n---\n\n## 📋 1. 保单凭证信息（已在本地精准脱敏）\n*注：姓名、身份证、卡号等已自动替换为代号，对应真实信息安全保存在本地映射表中。*\n\n```text\n保险单号：[保单号_9921]\n投保人：[投保人_姓名] (手机: [手机号_138****5678])\n被保人：[被保人_姓名] (投保年龄: 30周岁)\n险种名称：长相安长期医疗保险（费率可调）\n保障限额：4,000,000.00 元\n年交保费：286.00 元\n交费期间：1年期\n保证续保期：20年\n合同生效日：2023-09-01\n扣款账户：[扣费银行卡_尾号1122] (建设银行)\n```\n\n---\n\n## 🤖 2. 大模型深度条款梳理区（直接复制下方提示词发给大模型）\n\n> [!TIP] 医疗险理赔口诀\n> 扣除 1 万免赔额后，医保报销剩下的合理住院医疗费用（含自费药、质子重离子、院外靶向药特药），在二级及以上公立医院普通部 100% 赔付！"}, {"id": "示例-人保大护甲6号旗舰版个人意外险", "filename": "示例-人保大护甲6号旗舰版个人意外险.md", "relative_path": "示例-人保大护甲6号旗舰版个人意外险.md", "product_name": "大护甲6号个人意外伤害保险（旗舰版）", "insurer": "中国人民财产保险股份有限公司", "category": "意外险", "status": "保障中", "sum_insured": 1000000.0, "sum_insured_text": "100.0 万元", "annual_premium": 288.0, "annual_premium_text": "￥288.00", "leverage": 3472.2, "payment_period": "1年交", "coverage_period": "1年", "effective_date": "2026-10-20", "renewal_date": "10-20", "next_payment": "2027-10-20", "policyholder": "[投保人_张*]", "insured": "[投保人_张*]", "relationship": "本人", "overview": "> - **承保机构**：中国人民财产保险股份有限公司\n> - **保单类型**：意外险\n> - **保障总限额**：￥1,000,000 元 (100 万元意外身故伤残 + 5万元意外医疗)\n> - **缴费金额**：￥288.00 元（1年交）\n> - **保障期限**：1年（起期：`2026-10-20` ｜ 续期日：每年 `10-20`）\n> - **投被保人**：投保人 **[投保人_张*]** ｜ 被保险人 **[投保人_张*]**（是投保人的 **本人**）", "ai_section": "", "has_ai_report": false, "benefits_table": "| 保障责任分项 | 保额 | 免赔额 | 报销比例 | 特别说明 |\n| :--- | :--- | :--- | :--- | :--- |\n| **意外身故/伤残保险金** | 100 万元 | 0 元 | 按伤残等级 10%-100% | 基础意外身故与残疾保障 |\n| **意外医疗保险金** | 5 万元 | **0 元** | **100%报销** | 不限社保范围，含自费药 |\n| **意外住院津贴** | 150 元/天 | 0 免赔天数 | - | 单次限 90 天，全年限 180 天 |\n| **猝死关爱金** | 50 万元 | - | 100% | 突发急性病 24 小时内身故 |", "persons_table": "| 人员角色 | 姓名（脱敏） | 关系 | 证件类型 | 职业类别 |\n| :--- | :--- | :--- | :--- | :--- |\n| **投保人** | `[投保人_张*]` | 本人 | 居民身份证 | 1-3类 |\n| **被保险人** | `[投保人_张*]` | **本人** | 居民身份证 | 企业职员（1类） |", "raw_body_excerpt": "# 🛡️ 大护甲6号个人意外伤害保险（旗舰版）\n\n> [!NOTE] 快速概览\n> - **承保机构**：中国人民财产保险股份有限公司\n> - **保单类型**：意外险\n> - **保障总限额**：￥1,000,000 元 (100 万元意外身故伤残 + 5万元意外医疗)\n> - **缴费金额**：￥288.00 元（1年交）\n> - **保障期限**：1年（起期：`2026-10-20` ｜ 续期日：每年 `10-20`）\n> - **投被保人**：投保人 **[投保人_张*]** ｜ 被保险人 **[投保人_张*]**（是投保人的 **本人**）\n\n---\n\n## 📋 1. 保单人员信息与责任清单\n\n### 👤 人员信息结构化核验表\n| 人员角色 | 姓名（脱敏） | 关系 | 证件类型 | 职业类别 |\n| :--- | :--- | :--- | :--- | :--- |\n| **投保人** | `[投保人_张*]` | 本人 | 居民身份证 | 1-3类 |\n| **被保险人** | `[投保人_张*]` | **本人** | 居民身份证 | 企业职员（1类） |\n\n### 💰 保障责任分项明细\n| 保障责任分项 | 保额 | 免赔额 | 报销比例 | 特别说明 |\n| :--- | :--- | :--- | :--- | :--- |\n| **意外身故/伤残保险金** | 100 万元 | 0 元 | 按伤残等级 10%-100% | 基础意外身故与残疾保障 |\n| **意外医疗保险金** | 5 万元 | **0 元** | **100%报销** | 不限社保范围，含自费药 |\n| **意外住院津贴** | 150 元/天 | 0 免赔天数 | - | 单次限 90 天，全年限 180 天 |\n| **猝死关爱金** | 50 万元 | - | 100% | 突发急性病 24 小时内身故 |"}, {"id": "示例-复星联合达尔文7号重大疾病保险", "filename": "示例-复星联合达尔文7号重大疾病保险.md", "relative_path": "示例-复星联合达尔文7号重大疾病保险.md", "product_name": "达尔文7号重大疾病保险", "insurer": "复星联合健康保险股份有限公司", "category": "重疾险", "status": "保障中", "sum_insured": 500000.0, "sum_insured_text": "50.0 万元", "annual_premium": 5200.0, "annual_premium_text": "￥5,200.00", "leverage": 96.2, "payment_period": "30年交", "coverage_period": "终身", "effective_date": "2023-08-15", "renewal_date": "08-15", "next_payment": "2027-08-15", "policyholder": "[投保人_张*]", "insured": "[投保人_张*]", "relationship": "本人", "overview": "> - **承保公司**：复星联合健康保险股份有限公司\n> - **险种分类**：重疾险\n> - **保障额度**：500,000 元（基本保额50万）\n> - **年缴保费**：￥5,200.00\n> - **缴费期限**：30年交 ｜ **保障期限**：终身\n> - **交费对应日**：每年 `08-15`（下次扣款预计：`2027-08-15`）", "ai_section": "> [!TIP] 使用说明\n> 点击下方代码块右上角一键复制。你可以直接将本段文本发送给 **DeepSeek / Claude / ChatGPT**，让它帮你生成结构化的赔付要点。完成后可将大模型的答复粘贴在下方：\n\n````markdown\n### 📝 发给大模型的 Prompt 模板：\n你是一位资深专业的保险理赔精算与核保专家。以下是一份已经完成本地脱敏的保险保单完整信息与条款内容。\n请帮我深度梳理这份保单的【赔付条款】与【缴费跟踪要点】，请用清晰的 Markdown 结构化输出：\n\n1. **核心保障责任与赔付标准**：\n   - 包含哪些保障项目（重疾、中症、轻症、医疗、意外、身故等）？\n   - 各项责任的保额与赔付比例是多少？各赔付多少次？有无分组与间隔期？\n2. **免除责任与暗坑排查（重要）**：\n   - 有哪些常见但容易被忽略的不赔情形（免责条款）？\n   - 是否有特定的既往症、就诊医院等级限制（如二级及以上公立医院普通部）？\n3. **理赔关键时间与时效**：\n   - 等待期是多少天？等待期内出险如何处理？\n   - 出险后的报案时效限制与理赔单证要求是什么？\n4. **缴费与续保跟踪**：\n   - 每年需缴纳多少保费？最长缴费宽限期是多少天（通常为60天）？\n   - 如果发生断缴，保单复效期是多久？\n5. **一句话理赔口诀**：\n   - 用最通俗口语总结：在什么情况下，准备什么资料，能向保险公司赔到多少钱。\n\n【脱敏后的保单及条款内容】：\n产品名称：达尔文7号重大疾病保险\n基本保额：500,000 元\n年交保费：5,200 元\n交费期间：30年交\n保障期间：终身\n等待期：180天\n主要责任：110种重疾赔付100%保额1次；35种中症赔付60%保额，最高赔付3次；40种轻症赔付30%保额，最高赔付4次；重疾赔付后，非同组中轻症保障继续有效。被保人初次确诊轻/中/重疾豁免后续保费。\n免除责任：投保人故意伤害、被保险人自残或自杀、故意犯罪、吸食毒品、酒驾无证驾驶、遗传性疾病及先天性畸形。\n就诊医院要求：国家卫生行政部门评定的二级或二级以上公立医院普通部。\n````\n\n### 📌 大模型梳理结果示例：\n> [!SUCCESS] AI 专家条款提炼总结\n> 1. **重疾赔付**：确诊 110 种重疾一次性赔付 50 万元，合同重疾责任终止，但轻症与中症责任仍继续有效！\n> 2. **轻中症赔付**：中症赔付 30 万/次（最高3次），轻症赔付 15 万/次（最高4次），轻中症均不分组无间隔期。\n> 3. **保费豁免**：只要首次罹患轻症/中症/重疾，后续剩余年份保费全部不用再交，合同继续有效。\n> 4. **避坑提示**：医院必须是**二级及以上公立医院普通部**（特需部/国际部/私立诊所不赔）；等待期为 **180天**，等待期内确诊非意外导致的重疾仅退还已交保费。\n> 5. **续费跟踪**：每年 8 月 15 日扣款 5,200 元，宽限期至 10 月 14 日；扣款卡为招商银行尾号 6688。\n\n---", "has_ai_report": true, "benefits_table": "", "persons_table": "", "raw_body_excerpt": "# 🛡️ 达尔文7号重大疾病保险\n\n> [!NOTE] 快速概览\n> - **承保公司**：复星联合健康保险股份有限公司\n> - **险种分类**：重疾险\n> - **保障额度**：500,000 元（基本保额50万）\n> - **年缴保费**：￥5,200.00\n> - **缴费期限**：30年交 ｜ **保障期限**：终身\n> - **交费对应日**：每年 `08-15`（下次扣款预计：`2027-08-15`）\n\n---\n\n## 📋 1. 保单凭证信息（已在本地精准脱敏）\n*注：姓名、身份证、卡号等已自动替换为代号，对应真实信息安全保存在本地映射表中。*\n\n```text\n保险单号：[保单号_8892]\n投保人：[投保人_姓名] (身份证: [身份证_110...7890] | 手机: [手机号_138****5678])\n被保人：[被保人_姓名] (身份证: [身份证_110...7890] | 投保年龄: 30周岁)\n险种名称：达尔文7号重大疾病保险\n保险金额：500,000.00 元\n年交保费：5,200.00 元\n交费期间：30年交\n保险期间：终身\n合同生效日：2023-08-15\n扣款账户：[扣费银行卡_尾号6688] (招商银行)\n```\n\n---\n\n## 🤖 2. 大模型深度条款梳理区（直接复制下方提示词发给大模型）\n\n> [!TIP] 使用说明\n> 点击下方代码块右上角一键复制。你可以直接将本段文本发送给 **DeepSeek / Claude / ChatGPT**，让它帮你生成结构化的赔付要点。完成后可将大模型的答复粘贴在下方：\n\n````markdown\n### 📝 发给大模型的 Prompt 模板：\n你是一位资深专业的保险理赔精算与核保专家。以下是一份已经完成本地脱敏的保险保单完整信息与条款内容。\n请帮我深度梳理这份保单的【赔付条款】与【缴费跟踪要点】，请用清晰的 Markdown 结构化输出：\n\n1. **核心保障责任与赔付标准**：\n   - 包含哪些保障项目（重疾、中症、轻症、医疗、意外、身故等）？\n   - 各项责任的保额与赔付比例是多少？各赔付多少次？有无分组与间隔期？\n2. **免除责任与暗坑排查（重要）**：\n   - 有哪些常见但容易被忽略的不赔情形（免责条款）？\n   - 是否有特定的既往症、就诊医院等级限制（如二级及以上公立医院普通部）？\n3. **理赔关键时间与时效**：\n   - 等待期是多少天？等待期内出险如何处理？\n   - 出险后的报案时效限制与理赔单证要求是什么？\n4. **缴费与续保跟踪**：\n   - 每年需缴纳多少保费？最长缴费宽限期是多少天（通常为60天）？\n   - 如果发生断缴，保单复效期是多久？\n5. **一句话理赔口诀**：\n   - 用最通俗口语总结：在什么情况下，准备什么资料，能向保险公司赔到多少钱。\n\n【脱敏后的保单及条款内容】：\n产品名称：达尔文7号重大疾病保险\n基本保额：500,000 元\n年交保费：5,200 元\n交费期间：30年交\n保障期间：终身\n等待期：180天\n主要责任：110种重疾赔付100%保额1次；35种中症赔付60%保额，最高赔付3次；40种轻症赔付30%保额，最高赔付4次；重疾赔付后，非同组中轻症保障继续有效。被保人初次确诊轻/中/重疾豁免后续保费。\n免除责任：投保人故意伤害、被保险人自残或自杀、故意犯罪、吸食毒品、酒驾无证驾驶、遗传性疾病及先天性畸形。\n就诊医院要求：国家卫生行政部门评定的二级或二级以上公立医院普通部。\n````\n\n### 📌 大模型梳理结果示例：\n> [!SUCCESS] AI 专家条款提炼总结\n> 1. **重疾赔付**：确诊 110 种重疾一次性赔付 50 万元，合同重疾责任终止，但轻症与中症责任仍继续有效！\n> 2. **轻中症赔付**：中症赔付 30 万/次（最高3次），轻症赔付 15 万/次（最高4次），轻中症均不分组无间隔期。\n> 3. **保费豁免**：只要首次罹患轻症/中症/重疾，后续剩余年份保费全部不用再交，合同继续有效。\n> 4. **避坑提示**：医院必须是**二级及以上公立医院普通部**（特需部/国际部/私立诊所不赔）；等待期为 **180天**，等待期内确诊非意外导致的重疾仅退还已交保费。\n> 5. **续费跟踪**：每年 8 月 15 日扣款 5,200 元，宽限期至 10 月 14 日；扣款卡为招商银行尾号 6688。\n\n---\n\n## 📑 3. 完整保单条款存档（已脱敏）\n<details>\n<summary>展开查看完整条款全文（无个人隐私，供查阅检索）</summary>\n\n*(此处存放完整条款正文，无个人隐私)*\n</details>"}]};
+    window.BAODAN_DATA = {"updatedAt": "2026-11-11 22:18:55", "totalCoverage": 5500000.0, "totalCoverageText": "550.0 万元", "totalPremium": 5774.0, "totalPremiumText": "￥5,774.00", "activeCount": 3, "overallLeverage": 952.5, "categoryStats": {"医疗险": {"premium": 286.0, "coverage": 4000000.0, "count": 1}, "意外险": {"premium": 288.0, "coverage": 1000000.0, "count": 1}, "重疾险": {"premium": 5200.0, "coverage": 500000.0, "count": 1}}, "memberStats": {"[配偶_妻子*] (配偶)": {"premium": 286.0, "coverage": 4000000.0, "count": 1}, "[投保人_张*] (本人)": {"premium": 5488.0, "coverage": 1500000.0, "count": 2}}, "monthlyFlow": {"1": 0.0, "2": 0.0, "3": 0.0, "4": 0.0, "5": 0.0, "6": 0.0, "7": 0.0, "8": 5200.0, "9": 286.0, "10": 288.0, "11": 0.0, "12": 0.0}, "peakMonth": 8, "policies": [{"id": "示例-平安长相安长期百万医疗保险", "filename": "示例-平安长相安长期百万医疗保险.md", "relative_path": "示例-平安长相安长期百万医疗保险.md", "product_name": "长相安长期医疗保险(费率可调)", "insurer": "平安健康保险股份有限公司", "category": "医疗险", "status": "保障中", "sum_insured": 4000000.0, "sum_insured_text": "400.0 万元", "annual_premium": 286.0, "annual_premium_text": "￥286.00", "leverage": 13986.0, "payment_period": "1年(保证续保20年)", "coverage_period": "1年", "effective_date": "2023-09-01", "renewal_date": "09-01", "next_payment": "2027-09-01", "policyholder": "[投保人_张*]", "insured": "[配偶_妻子*]", "relationship": "配偶", "overview": "> - **承保公司**：平安健康保险股份有限公司\n> - **险种分类**：医疗险 (百万医疗)\n> - **保障额度**：4,000,000 元（一般医疗200万 + 重疾医疗400万）\n> - **年缴保费**：￥286.00 (首期保费)\n> - **缴费期限**：1年交（保证续保20年） ｜ **保障期限**：1年\n> - **续期扣费日**：每年 `09-01`", "ai_section": "", "has_ai_report": false, "benefits_table": "", "persons_table": "", "raw_body_excerpt": "# 🛡️ 长相安长期医疗保险(费率可调)\n\n> [!NOTE] 快速概览\n> - **承保公司**：平安健康保险股份有限公司\n> - **险种分类**：医疗险 (百万医疗)\n> - **保障额度**：4,000,000 元（一般医疗200万 + 重疾医疗400万）\n> - **年缴保费**：￥286.00 (首期保费)\n> - **缴费期限**：1年交（保证续保20年） ｜ **保障期限**：1年\n> - **续期扣费日**：每年 `09-01`\n\n---\n\n## 📋 1. 保单凭证信息（已在本地精准脱敏）\n*注：姓名、身份证、卡号等已自动替换为代号，对应真实信息安全保存在本地映射表中。*\n\n```text\n保险单号：[保单号_9921]\n投保人：[投保人_姓名] (手机: [手机号_138****5678])\n被保人：[被保人_姓名] (投保年龄: 30周岁)\n险种名称：长相安长期医疗保险（费率可调）\n保障限额：4,000,000.00 元\n年交保费：286.00 元\n交费期间：1年期\n保证续保期：20年\n合同生效日：2023-09-01\n扣款账户：[扣费银行卡_尾号1122] (建设银行)\n```\n\n---\n\n## 🤖 2. 大模型深度条款梳理区（直接复制下方提示词发给大模型）\n\n> [!TIP] 医疗险理赔口诀\n> 扣除 1 万免赔额后，医保报销剩下的合理住院医疗费用（含自费药、质子重离子、院外靶向药特药），在二级及以上公立医院普通部 100% 赔付！"}, {"id": "示例-人保大护甲6号旗舰版个人意外险", "filename": "示例-人保大护甲6号旗舰版个人意外险.md", "relative_path": "示例-人保大护甲6号旗舰版个人意外险.md", "product_name": "大护甲6号个人意外伤害保险（旗舰版）", "insurer": "中国人民财产保险股份有限公司", "category": "意外险", "status": "保障中", "sum_insured": 1000000.0, "sum_insured_text": "100.0 万元", "annual_premium": 288.0, "annual_premium_text": "￥288.00", "leverage": 3472.2, "payment_period": "1年交", "coverage_period": "1年", "effective_date": "2026-10-20", "renewal_date": "10-20", "next_payment": "2027-10-20", "policyholder": "[投保人_张*]", "insured": "[投保人_张*]", "relationship": "本人", "overview": "> - **承保机构**：中国人民财产保险股份有限公司\n> - **保单类型**：意外险\n> - **保障总限额**：￥1,000,000 元 (100 万元意外身故伤残 + 5万元意外医疗)\n> - **缴费金额**：￥288.00 元（1年交）\n> - **保障期限**：1年（起期：`2026-10-20` ｜ 续期日：每年 `10-20`）\n> - **投被保人**：投保人 **[投保人_张*]** ｜ 被保险人 **[投保人_张*]**（是投保人的 **本人**）", "ai_section": "", "has_ai_report": false, "benefits_table": "| 保障责任分项 | 保额 | 免赔额 | 报销比例 | 特别说明 |\n| :--- | :--- | :--- | :--- | :--- |\n| **意外身故/伤残保险金** | 100 万元 | 0 元 | 按伤残等级 10%-100% | 基础意外身故与残疾保障 |\n| **意外医疗保险金** | 5 万元 | **0 元** | **100%报销** | 不限社保范围，含自费药 |\n| **意外住院津贴** | 150 元/天 | 0 免赔天数 | - | 单次限 90 天，全年限 180 天 |\n| **猝死关爱金** | 50 万元 | - | 100% | 突发急性病 24 小时内身故 |", "persons_table": "| 人员角色 | 姓名（脱敏） | 关系 | 证件类型 | 职业类别 |\n| :--- | :--- | :--- | :--- | :--- |\n| **投保人** | `[投保人_张*]` | 本人 | 居民身份证 | 1-3类 |\n| **被保险人** | `[投保人_张*]` | **本人** | 居民身份证 | 企业职员（1类） |", "raw_body_excerpt": "# 🛡️ 大护甲6号个人意外伤害保险（旗舰版）\n\n> [!NOTE] 快速概览\n> - **承保机构**：中国人民财产保险股份有限公司\n> - **保单类型**：意外险\n> - **保障总限额**：￥1,000,000 元 (100 万元意外身故伤残 + 5万元意外医疗)\n> - **缴费金额**：￥288.00 元（1年交）\n> - **保障期限**：1年（起期：`2026-10-20` ｜ 续期日：每年 `10-20`）\n> - **投被保人**：投保人 **[投保人_张*]** ｜ 被保险人 **[投保人_张*]**（是投保人的 **本人**）\n\n---\n\n## 📋 1. 保单人员信息与责任清单\n\n### 👤 人员信息结构化核验表\n| 人员角色 | 姓名（脱敏） | 关系 | 证件类型 | 职业类别 |\n| :--- | :--- | :--- | :--- | :--- |\n| **投保人** | `[投保人_张*]` | 本人 | 居民身份证 | 1-3类 |\n| **被保险人** | `[投保人_张*]` | **本人** | 居民身份证 | 企业职员（1类） |\n\n### 💰 保障责任分项明细\n| 保障责任分项 | 保额 | 免赔额 | 报销比例 | 特别说明 |\n| :--- | :--- | :--- | :--- | :--- |\n| **意外身故/伤残保险金** | 100 万元 | 0 元 | 按伤残等级 10%-100% | 基础意外身故与残疾保障 |\n| **意外医疗保险金** | 5 万元 | **0 元** | **100%报销** | 不限社保范围，含自费药 |\n| **意外住院津贴** | 150 元/天 | 0 免赔天数 | - | 单次限 90 天，全年限 180 天 |\n| **猝死关爱金** | 50 万元 | - | 100% | 突发急性病 24 小时内身故 |"}, {"id": "示例-复星联合达尔文7号重大疾病保险", "filename": "示例-复星联合达尔文7号重大疾病保险.md", "relative_path": "示例-复星联合达尔文7号重大疾病保险.md", "product_name": "达尔文7号重大疾病保险", "insurer": "复星联合健康保险股份有限公司", "category": "重疾险", "status": "保障中", "sum_insured": 500000.0, "sum_insured_text": "50.0 万元", "annual_premium": 5200.0, "annual_premium_text": "￥5,200.00", "leverage": 96.2, "payment_period": "30年交", "coverage_period": "终身", "effective_date": "2023-08-15", "renewal_date": "08-15", "next_payment": "2027-08-15", "policyholder": "[投保人_张*]", "insured": "[投保人_张*]", "relationship": "本人", "overview": "> - **承保公司**：复星联合健康保险股份有限公司\n> - **险种分类**：重疾险\n> - **保障额度**：500,000 元（基本保额50万）\n> - **年缴保费**：￥5,200.00\n> - **缴费期限**：30年交 ｜ **保障期限**：终身\n> - **交费对应日**：每年 `08-15`（下次扣款预计：`2027-08-15`）", "ai_section": "> [!TIP] 使用说明\n> 点击下方代码块右上角一键复制。你可以直接将本段文本发送给 **DeepSeek / Claude / ChatGPT**，让它帮你生成结构化的赔付要点。完成后可将大模型的答复粘贴在下方：\n\n````markdown\n### 📝 发给大模型的 Prompt 模板：\n你是一位资深专业的保险理赔精算与核保专家。以下是一份已经完成本地脱敏的保险保单完整信息与条款内容。\n请帮我深度梳理这份保单的【赔付条款】与【缴费跟踪要点】，请用清晰的 Markdown 结构化输出：\n\n1. **核心保障责任与赔付标准**：\n   - 包含哪些保障项目（重疾、中症、轻症、医疗、意外、身故等）？\n   - 各项责任的保额与赔付比例是多少？各赔付多少次？有无分组与间隔期？\n2. **免除责任与暗坑排查（重要）**：\n   - 有哪些常见但容易被忽略的不赔情形（免责条款）？\n   - 是否有特定的既往症、就诊医院等级限制（如二级及以上公立医院普通部）？\n3. **理赔关键时间与时效**：\n   - 等待期是多少天？等待期内出险如何处理？\n   - 出险后的报案时效限制与理赔单证要求是什么？\n4. **缴费与续保跟踪**：\n   - 每年需缴纳多少保费？最长缴费宽限期是多少天（通常为60天）？\n   - 如果发生断缴，保单复效期是多久？\n5. **一句话理赔口诀**：\n   - 用最通俗口语总结：在什么情况下，准备什么资料，能向保险公司赔到多少钱。\n\n【脱敏后的保单及条款内容】：\n产品名称：达尔文7号重大疾病保险\n基本保额：500,000 元\n年交保费：5,200 元\n交费期间：30年交\n保障期间：终身\n等待期：180天\n主要责任：110种重疾赔付100%保额1次；35种中症赔付60%保额，最高赔付3次；40种轻症赔付30%保额，最高赔付4次；重疾赔付后，非同组中轻症保障继续有效。被保人初次确诊轻/中/重疾豁免后续保费。\n免除责任：投保人故意伤害、被保险人自残或自杀、故意犯罪、吸食毒品、酒驾无证驾驶、遗传性疾病及先天性畸形。\n就诊医院要求：国家卫生行政部门评定的二级或二级以上公立医院普通部。\n````\n\n### 📌 大模型梳理结果示例：\n> [!SUCCESS] AI 专家条款提炼总结\n> 1. **重疾赔付**：确诊 110 种重疾一次性赔付 50 万元，合同重疾责任终止，但轻症与中症责任仍继续有效！\n> 2. **轻中症赔付**：中症赔付 30 万/次（最高3次），轻症赔付 15 万/次（最高4次），轻中症均不分组无间隔期。\n> 3. **保费豁免**：只要首次罹患轻症/中症/重疾，后续剩余年份保费全部不用再交，合同继续有效。\n> 4. **避坑提示**：医院必须是**二级及以上公立医院普通部**（特需部/国际部/私立诊所不赔）；等待期为 **180天**，等待期内确诊非意外导致的重疾仅退还已交保费。\n> 5. **续费跟踪**：每年 8 月 15 日扣款 5,200 元，宽限期至 10 月 14 日；扣款卡为招商银行尾号 6688。\n\n---", "has_ai_report": true, "benefits_table": "", "persons_table": "", "raw_body_excerpt": "# 🛡️ 达尔文7号重大疾病保险\n\n> [!NOTE] 快速概览\n> - **承保公司**：复星联合健康保险股份有限公司\n> - **险种分类**：重疾险\n> - **保障额度**：500,000 元（基本保额50万）\n> - **年缴保费**：￥5,200.00\n> - **缴费期限**：30年交 ｜ **保障期限**：终身\n> - **交费对应日**：每年 `08-15`（下次扣款预计：`2027-08-15`）\n\n---\n\n## 📋 1. 保单凭证信息（已在本地精准脱敏）\n*注：姓名、身份证、卡号等已自动替换为代号，对应真实信息安全保存在本地映射表中。*\n\n```text\n保险单号：[保单号_8892]\n投保人：[投保人_姓名] (身份证: [身份证_110...7890] | 手机: [手机号_138****5678])\n被保人：[被保人_姓名] (身份证: [身份证_110...7890] | 投保年龄: 30周岁)\n险种名称：达尔文7号重大疾病保险\n保险金额：500,000.00 元\n年交保费：5,200.00 元\n交费期间：30年交\n保险期间：终身\n合同生效日：2023-08-15\n扣款账户：[扣费银行卡_尾号6688] (招商银行)\n```\n\n---\n\n## 🤖 2. 大模型深度条款梳理区（直接复制下方提示词发给大模型）\n\n> [!TIP] 使用说明\n> 点击下方代码块右上角一键复制。你可以直接将本段文本发送给 **DeepSeek / Claude / ChatGPT**，让它帮你生成结构化的赔付要点。完成后可将大模型的答复粘贴在下方：\n\n````markdown\n### 📝 发给大模型的 Prompt 模板：\n你是一位资深专业的保险理赔精算与核保专家。以下是一份已经完成本地脱敏的保险保单完整信息与条款内容。\n请帮我深度梳理这份保单的【赔付条款】与【缴费跟踪要点】，请用清晰的 Markdown 结构化输出：\n\n1. **核心保障责任与赔付标准**：\n   - 包含哪些保障项目（重疾、中症、轻症、医疗、意外、身故等）？\n   - 各项责任的保额与赔付比例是多少？各赔付多少次？有无分组与间隔期？\n2. **免除责任与暗坑排查（重要）**：\n   - 有哪些常见但容易被忽略的不赔情形（免责条款）？\n   - 是否有特定的既往症、就诊医院等级限制（如二级及以上公立医院普通部）？\n3. **理赔关键时间与时效**：\n   - 等待期是多少天？等待期内出险如何处理？\n   - 出险后的报案时效限制与理赔单证要求是什么？\n4. **缴费与续保跟踪**：\n   - 每年需缴纳多少保费？最长缴费宽限期是多少天（通常为60天）？\n   - 如果发生断缴，保单复效期是多久？\n5. **一句话理赔口诀**：\n   - 用最通俗口语总结：在什么情况下，准备什么资料，能向保险公司赔到多少钱。\n\n【脱敏后的保单及条款内容】：\n产品名称：达尔文7号重大疾病保险\n基本保额：500,000 元\n年交保费：5,200 元\n交费期间：30年交\n保障期间：终身\n等待期：180天\n主要责任：110种重疾赔付100%保额1次；35种中症赔付60%保额，最高赔付3次；40种轻症赔付30%保额，最高赔付4次；重疾赔付后，非同组中轻症保障继续有效。被保人初次确诊轻/中/重疾豁免后续保费。\n免除责任：投保人故意伤害、被保险人自残或自杀、故意犯罪、吸食毒品、酒驾无证驾驶、遗传性疾病及先天性畸形。\n就诊医院要求：国家卫生行政部门评定的二级或二级以上公立医院普通部。\n````\n\n### 📌 大模型梳理结果示例：\n> [!SUCCESS] AI 专家条款提炼总结\n> 1. **重疾赔付**：确诊 110 种重疾一次性赔付 50 万元，合同重疾责任终止，但轻症与中症责任仍继续有效！\n> 2. **轻中症赔付**：中症赔付 30 万/次（最高3次），轻症赔付 15 万/次（最高4次），轻中症均不分组无间隔期。\n> 3. **保费豁免**：只要首次罹患轻症/中症/重疾，后续剩余年份保费全部不用再交，合同继续有效。\n> 4. **避坑提示**：医院必须是**二级及以上公立医院普通部**（特需部/国际部/私立诊所不赔）；等待期为 **180天**，等待期内确诊非意外导致的重疾仅退还已交保费。\n> 5. **续费跟踪**：每年 8 月 15 日扣款 5,200 元，宽限期至 10 月 14 日；扣款卡为招商银行尾号 6688。\n\n---\n\n## 📑 3. 完整保单条款存档（已脱敏）\n<details>\n<summary>展开查看完整条款全文（无个人隐私，供查阅检索）</summary>\n\n*(此处存放完整条款正文，无个人隐私)*\n</details>"}]};
     window.VAULT_CONFIG = { apiKey: "" };
 
     let currentCategoryFilter = 'ALL';
@@ -943,10 +1321,68 @@
 
     // 初始化渲染
     document.addEventListener('DOMContentLoaded', () => {
+      renderEditorialBarcode();
       renderKanban();
       renderAnalytics();
       renderCalendar();
     });
+
+    // 杂志风顶栏快捷联动
+    function openFirstPolicy() {
+      if (window.BAODAN_DATA.policies && window.BAODAN_DATA.policies.length > 0) {
+        openDrawer(window.BAODAN_DATA.policies[0]);
+      }
+    }
+
+    function askQuickFromHero(question) {
+      if (window.BAODAN_DATA.policies && window.BAODAN_DATA.policies.length > 0) {
+        const p = window.BAODAN_DATA.policies[0];
+        openDrawer(p);
+        setTimeout(() => {
+          askQuick(p.id, question);
+        }, 200);
+      }
+    }
+
+    function renderEditorialBarcode() {
+      const container = document.getElementById('editorialBarcodeBars');
+      const legend = document.getElementById('editorialBarcodeLegend');
+      if (!container || !legend) return;
+
+      const totalBars = 28;
+      let barsHtml = '';
+
+      for (let i = 0; i < totalBars; i++) {
+        let barClass = 'bar-medical';
+        let isHollow = false;
+        if (i < 13) {
+          barClass = 'bar-medical';
+        } else if (i < 18) {
+          barClass = 'bar-illness';
+        } else if (i < 21) {
+          barClass = 'bar-accident';
+        } else if (i < 23) {
+          barClass = 'bar-life';
+        } else {
+          isHollow = true;
+        }
+        barsHtml += `<div class="barcode-bar ${barClass} ${isHollow ? 'bar-hollow' : ''}"></div>`;
+      }
+      container.innerHTML = barsHtml;
+
+      const med = window.BAODAN_DATA.categoryStats['医疗险'] ? (window.BAODAN_DATA.categoryStats['医疗险'].coverage/10000).toFixed(1) + '万' : '700.5万';
+      const ill = window.BAODAN_DATA.categoryStats['重疾险'] ? (window.BAODAN_DATA.categoryStats['重疾险'].coverage/10000).toFixed(1) + '万' : '0万';
+      const acc = window.BAODAN_DATA.categoryStats['意外险'] ? (window.BAODAN_DATA.categoryStats['意外险'].coverage/10000).toFixed(1) + '万' : '0万';
+      const life = window.BAODAN_DATA.categoryStats['寿险'] ? (window.BAODAN_DATA.categoryStats['寿险'].coverage/10000).toFixed(1) + '万' : '0万';
+
+      legend.innerHTML = `
+        <span class="legend-item"><span class="legend-dot dot-medical"></span>医疗险 ${med}</span>
+        <span class="legend-item"><span class="legend-dot dot-illness"></span>重疾险 ${ill}</span>
+        <span class="legend-item"><span class="legend-dot dot-accident"></span>意外险 ${acc}</span>
+        <span class="legend-item"><span class="legend-dot dot-life"></span>寿险 ${life}</span>
+        <span class="legend-item"><span class="legend-dot dot-hollow"></span>待配置缺口</span>
+      `;
+    }
 
     // 亮暗主题切换
     function toggleTheme() {
