@@ -538,12 +538,35 @@ def call_deepseek_ai_for_suite(meta, holder, insured, master_text, clause_text="
 
     return None
 
+def format_collapsible_callout(title, content, callout_type="abstract"):
+    """
+    生成 Obsidian 原生折叠 Callout，彻底解决 HTML <details> 超长文本导致 CodeMirror 无法折叠的缺陷
+    """
+    if not content or not content.strip():
+        return ""
+    lines = [
+        f"> [!{callout_type}]- 📑 {title}（已折叠 · 点击展开全文）",
+        "> ```text"
+    ]
+    for l in content.splitlines():
+        if l.strip():
+            lines.append(f"> {l}")
+        else:
+            lines.append(">")
+    lines.append("> ```")
+    return "\n".join(lines)
+
 def generate_suite_markdown(meta, holder, insured, master_pdf_name, clause_pdf_name=None, value_added_pdf_name=None, ai_report=None, master_full="", clause_full="", value_added_full=""):
     """
     生成单一规范的 Obsidian 主保单笔记
     """
     now_year = datetime.now().year
     next_payment = f"{now_year}-{meta['renewal_date']}"
+
+    master_callout = format_collapsible_callout("展开查看：【主单凭证】电子保险单脱敏全文", master_full)
+    clause_callout = format_collapsible_callout("展开查看：【适用条款】适用条款全文存档（已脱敏）", clause_full) if clause_full else ""
+    val_callout = format_collapsible_callout("展开查看：【增值服务】增值服务手册全文存档（已脱敏）", value_added_full) if value_added_full else ""
+    archives_section = "\n\n".join([c for c in [master_callout, clause_callout, val_callout] if c])
 
     # AI 梳理区域
     if ai_report:
@@ -633,29 +656,7 @@ tags:
 
 ## 📑 3. 完整保单条款与附件存档（已脱敏）
 
-<details>
-<summary>展开查看：【主单凭证】电子保险单脱敏全文</summary>
-
-```text
-{master_full}
-```
-</details>
-
-<details>
-<summary>展开查看：【适用条款】适用条款全文存档（已脱敏）</summary>
-
-```text
-{clause_full}
-```
-</details>
-
-<details>
-<summary>展开查看：【增值服务】增值服务手册全文存档（已脱敏）</summary>
-
-```text
-{value_added_full}
-```
-</details>
+{archives_section}
 """
     return md_content
 
