@@ -118,3 +118,11 @@ python3 scripts/policy_processor.py --html --open --vault "/path/to/your/obsidia
 # 5. 重新构建并安装 Obsidian 插件
 cd plugin && npm run build
 ```
+
+---
+
+## ☕ 关于开发者 (Author Note)
+
+- **作者**：公众号「**6点关机**」主理人（CPA & LPQC 双证持证人，文字搬运工，AGI 信徒）
+- **理念**：“上班码字，下班 vibe-coding。持续探索并分享高质量 AI 提效、投资播客精读与个人探索思考。”
+- **交流与关注**：如果您觉得本项目在保单管理与条款排雷中对您有所启发，欢迎在微信搜索并关注公众号「**6点关机**」，一同交流更多 AI Agent 与知识管理工作流实践。

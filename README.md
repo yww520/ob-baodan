@@ -149,5 +149,20 @@ python3 scripts/policy_processor.py --html --open --vault "./vault-template"
 
 ---
 
+## 👨‍💻 关于作者与交流 (About the Author)
+
+本项目由微信公众号 **「6点关机」** 主理人设计与开源维护。
+
+> **CPA & LPQC 双证持证人 ｜ 文字搬运工 ｜ AGI 信徒**  
+> *“上班码字，下班 vibe-coding。分享高质量 AI 提效、投资播客精读与个人探索思考。”*
+
+<p align="center">
+  <img src="assets/wechat_signature_card.png" alt="公众号「6点关机」主理人签名栏" width="680" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+</p>
+
+如果您在日常使用、全家保单数字化整理或大模型落地实践中有所收获，欢迎关注微信公众号 **「6点关机」**，一同探讨 AI Agent 与数字资产管理的前沿实践。如果觉得好用，也欢迎为本项目点亮一颗 ⭐️ Star 支持！
+
+---
+
 ## 📄 License
 [MIT License](LICENSE) © 2026 yww520
