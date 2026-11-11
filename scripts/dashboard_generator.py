@@ -6,7 +6,8 @@ ob-baodan 独立离线 Web 看板生成器 (Standalone Web Dashboard Generator)
 1. 遍历 Obsidian 保单仓库 (01_保单库) 中的全部保单笔记；
 2. 提取 Frontmatter 元数据、责任明细、DeepSeek AI 精读报告与理赔规则；
 3. 编译生成自包含、零外部依赖、响应式的现代化 HTML 单文件看板 (baodan_dashboard.html)；
-4. 无需安装 Obsidian，双击即可在任何浏览器（Chrome/Safari/Edge/移动端）中打开浏览。
+4. 无需安装 Obsidian，双击即可在任何浏览器（Chrome/Safari/Edge/移动端）中打开浏览；
+5. 支持在浏览器中直接一键启动 DeepSeek AI 条款精读与多轮理赔智能追问。
 """
 
 import os
@@ -50,9 +51,19 @@ def parse_markdown_policy(file_path):
 
     # 提取大模型精读区
     ai_section = ""
-    ai_match = re.search(r'## 🤖 2\. (?:大模型条款深度梳理|大模型深度条款梳理区).*?\n(.*?)(?=\n<details|\n##|\Z)', body, re.S)
+    has_real_ai = False
+    ai_match = re.search(r'## 🤖 2\. (?:大模型条款深度梳理|大模型深度条款梳理区).*?\n(.*?)(?=\n##\s*📑?\s*3\.|\n##\s*3\.|\n<details|\Z)', body, re.S)
     if ai_match:
-        ai_section = ai_match.group(1).strip()
+        raw_ai = ai_match.group(1).strip()
+        # 剥离 Obsidian 专用插件代码块
+        clean_ai = re.sub(r'```baodan-ai\s*button:\s*true\s*```', '', raw_ai).strip()
+        # 检查是否为实质精读报告
+        if clean_ai and len(clean_ai) > 100 and not (clean_ai.startswith('> [!TIP] 建议使用') and len(clean_ai.splitlines()) < 8):
+            ai_section = clean_ai
+            has_real_ai = True
+        else:
+            ai_section = ""
+            has_real_ai = False
 
     # 提取责任明细表
     benefits_table = ""
@@ -93,9 +104,10 @@ def parse_markdown_policy(file_path):
         "relationship": meta.get("relationship", "本人"),
         "overview": overview,
         "ai_section": ai_section,
+        "has_ai_report": has_real_ai,
         "benefits_table": benefits_table,
         "persons_table": persons_table,
-        "raw_body_excerpt": body[:1200]
+        "raw_body_excerpt": body[:3000]
     }
 
 def collect_vault_policies(vault_dir):
@@ -107,7 +119,6 @@ def collect_vault_policies(vault_dir):
 
     policies = []
     for md_file in sorted(policy_base.rglob("*.md")):
-        # 跳过空保单或废弃保单
         p = parse_markdown_policy(md_file)
         if p and p["sum_insured"] > 0:
             policies.append(p)
@@ -120,6 +131,17 @@ def build_standalone_dashboard(vault_dir, output_file=None):
         output_file = vault_path / "baodan_dashboard.html"
     else:
         output_file = Path(output_file)
+
+    # 尝试读取本地 _system/config.json 中的 key（若存在）供本地页面免配置使用
+    vault_config_key = ""
+    config_file = vault_path / "_system" / "config.json"
+    if config_file.is_file():
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                cdata = json.load(f)
+                vault_config_key = cdata.get("aiApiKey", "")
+        except Exception:
+            pass
 
     policies = collect_vault_policies(vault_path)
 
@@ -309,6 +331,10 @@ def build_standalone_dashboard(vault_dir, output_file=None):
     }}
     .btn-primary:hover {{
       background: #4338ca;
+    }}
+    .btn-sm {{
+      padding: 4px 8px;
+      font-size: 12px;
     }}
 
     /* KPI 指标卡 */
@@ -764,8 +790,8 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       top: 0;
       right: 0;
       bottom: 0;
-      width: 680px;
-      max-width: 90vw;
+      width: 760px;
+      max-width: 92vw;
       background: var(--bg-surface);
       border-left: 1px solid var(--border-color);
       z-index: 101;
@@ -856,21 +882,38 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       font-size: 13px;
       line-height: 1.7;
       color: var(--text-main);
-      white-space: pre-wrap;
     }}
-    .ai-box table {{
-      width: 100%;
-      border-collapse: collapse;
+
+    /* 追问交互面板 */
+    .qa-box {{
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--border-color);
+    }}
+    .quick-pills {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
       margin: 10px 0;
-      font-size: 12px;
     }}
-    .ai-box th, .ai-box td {{
+    .quick-pill {{
+      padding: 4px 10px;
+      font-size: 11px;
+      border-radius: 14px;
       border: 1px solid var(--border-color);
-      padding: 6px 10px;
-      text-align: left;
+      background: var(--bg-surface);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
     }}
-    .ai-box th {{
-      background: rgba(255, 255, 255, 0.04);
+    .quick-pill:hover {{
+      border-color: var(--accent-primary);
+      color: var(--text-main);
+    }}
+    .qa-input-row {{
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
     }}
 
     /* 打印优化 */
@@ -895,6 +938,7 @@ def build_standalone_dashboard(vault_dir, output_file=None):
         </div>
       </div>
       <div class="header-actions">
+        <button class="btn" onclick="configureApiKey()">🔑 设置 DeepSeek Key</button>
         <button class="btn" onclick="window.print()">🖨️ 打印 / 导出 PDF</button>
         <button class="btn" id="themeToggleBtn" onclick="toggleTheme()">🌓 亮暗切换</button>
       </div>
@@ -1083,7 +1127,7 @@ def build_standalone_dashboard(vault_dir, output_file=None):
 
       <!-- DeepSeek AI 精读区 -->
       <div class="drawer-section">
-        <div class="drawer-section-title">🤖 DeepSeek AI 专家精读与排雷</div>
+        <div class="drawer-section-title">🤖 DeepSeek AI 专家精读与智能追问</div>
         <div class="ai-box" id="drawerAi"></div>
       </div>
 
@@ -1098,9 +1142,11 @@ def build_standalone_dashboard(vault_dir, output_file=None):
   <script>
     // 注入全部保单结构化数据
     window.BAODAN_DATA = {payload_json};
+    window.VAULT_CONFIG = {{ apiKey: {json.dumps(vault_config_key)} }};
 
     let currentCategoryFilter = 'ALL';
     let currentSearchTerm = '';
+    let currentPolicy = null;
 
     // 初始化渲染
     document.addEventListener('DOMContentLoaded', () => {{
@@ -1116,6 +1162,24 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       const next = current === 'dark' ? 'light' : 'dark';
       html.setAttribute('data-theme', next);
       localStorage.setItem('baodan_theme', next);
+    }}
+
+    // API Key 管理
+    function getApiKey() {{
+      return localStorage.getItem('baodan_deepseek_key') || (window.VAULT_CONFIG && window.VAULT_CONFIG.apiKey) || '';
+    }}
+
+    function configureApiKey() {{
+      const current = getApiKey();
+      const key = prompt('请输入您的 DeepSeek API Key（如 sk-...，仅安全保存在本地浏览器中）：', current);
+      if (key !== null) {{
+        const clean = key.trim();
+        localStorage.setItem('baodan_deepseek_key', clean);
+        if (clean) {{
+          alert('✅ DeepSeek API Key 保存成功！已启用实时在线精读与追问能力。');
+        }}
+      }}
+      return key ? key.trim() : '';
     }}
 
     // 标签页切换
@@ -1173,12 +1237,10 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       policies.forEach(p => {{
         const card = createPolicyCard(p);
 
-        // 判断是否为等待期或即将扣费
         if (p.status === '保障中') {{
           cardsActive.appendChild(card);
           countActive++;
 
-          // 扣款倒计时预警（若扣款日在近 60 天内）
           try {{
             const parts = p.renewal_date.split('-');
             if (parts.length >= 2) {{
@@ -1242,8 +1304,9 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       return div;
     }}
 
-    // 抽屉详情
+    // 打开抽屉详情
     function openDrawer(p) {{
+      currentPolicy = p;
       document.getElementById('drawerTitle').textContent = p.product_name;
       document.getElementById('drawerSubtitle').textContent = `${{p.insurer}} ｜ ${{p.category}} ｜ ${{p.payment_period}}`;
 
@@ -1259,12 +1322,7 @@ def build_standalone_dashboard(vault_dir, output_file=None):
         <div class="prop-row"><span class="prop-name">年度续期扣款日</span><span class="prop-val">${{p.renewal_date}}</span></div>
       `;
 
-      const aiEl = document.getElementById('drawerAi');
-      if (p.ai_section && p.ai_section.trim().length > 10) {{
-        aiEl.innerHTML = formatMarkdown(p.ai_section);
-      }} else {{
-        aiEl.innerHTML = '<p style="color:var(--text-dim);">该保单暂无本地 AI 精读记录。可通过脚本运行 --ai 进行条款精读。</p>';
-      }}
+      renderDrawerAi(p);
 
       const benefitsSection = document.getElementById('drawerBenefitsSection');
       const benefitsEl = document.getElementById('drawerBenefits');
@@ -1279,6 +1337,188 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       document.getElementById('policyDrawer').classList.add('open');
     }}
 
+    function renderDrawerAi(p) {{
+      const aiEl = document.getElementById('drawerAi');
+      const hasReport = p.has_ai_report || (p.ai_section && p.ai_section.length > 80);
+
+      if (hasReport) {{
+        aiEl.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border-color);">
+            <span style="font-size:12px; color:#10b981; font-weight:700;">✅ 已完成 DeepSeek 条款深度精读</span>
+            <button class="btn btn-sm" onclick="runAiInBrowser('${{p.id}}')">🔄 重新精读</button>
+          </div>
+          <div>${{formatMarkdown(p.ai_section)}}</div>
+          ${{renderQaBlock(p)}}
+        `;
+      }} else {{
+        aiEl.innerHTML = `
+          <div style="padding:22px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; text-align:center;">
+            <div style="font-size:30px; margin-bottom:8px;">🤖</div>
+            <div style="font-weight:800; font-size:16px; margin-bottom:6px; color:var(--text-main);">该保单尚未生成 AI 条款精读报告</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:16px; line-height:1.6; max-width:440px; margin-left:auto; margin-right:auto;">
+              您可以直接在当前网页中一键在线调用 DeepSeek 大模型，自动解析本保单的阶梯报销比例、排查免责暗坑、医院等级与必备理赔材料。
+            </div>
+            <button class="btn btn-primary" id="btnRunAi_${{p.id}}" onclick="runAiInBrowser('${{p.id}}')" style="font-size:14px; padding:10px 22px;">
+              ⚡ 立即调用 DeepSeek 启动条款精读
+            </button>
+            <div id="aiRunProgress_${{p.id}}" style="display:none; margin-top:14px; font-size:13px; color:#10b981; font-weight:600;">
+              ⏳ 正在连接 DeepSeek API 进行深度条款推理与免责梳理，约需 10~15 秒，请稍候...
+            </div>
+          </div>
+          ${{renderQaBlock(p)}}
+        `;
+      }}
+    }}
+
+    function renderQaBlock(p) {{
+      return `
+        <div class="qa-box">
+          <div style="font-size:13px; font-weight:700; color:var(--text-main); display:flex; justify-content:space-between; align-items:center;">
+            <span>💬 向 DeepSeek 智能追问本保单理赔</span>
+            <button class="btn btn-sm" onclick="configureApiKey()" style="font-size:11px;">🔑 Key 设置</button>
+          </div>
+          <div class="quick-pills">
+            <button class="quick-pill" onclick="askQuick('${{p.id}}', '👶 如果小孩急性肺炎住院花费8,000元，社保报销后剩余3,000元，本保单能赔多少？给出分步计算过程')">👶 小孩肺炎住院报销测算</button>
+            <button class="quick-pill" onclick="askQuick('${{p.id}}', '💊 住院期间医生开具的医保目录外自费药、靶向药能否在此保单报销？')">💊 自费药/特药能报销吗</button>
+            <button class="quick-pill" onclick="askQuick('${{p.id}}', '🏥 如果去了三甲医院特需部、国际部或私立医院就诊，本保单赔不赔？')">🏥 特需部/私立医院赔不赔</button>
+            <button class="quick-pill" onclick="askQuick('${{p.id}}', '⏳ 在保单生效后30天等待期内生病，保费退还吗？既往症能否理赔？')">⏳ 既往症与等待期规定</button>
+            <button class="quick-pill" onclick="askQuick('${{p.id}}', '📞 本保单自带的三甲医院门诊就医绿通或垫付服务如何申请？最快几天安排？')">📞 门诊绿通怎么预约</button>
+          </div>
+          <div class="qa-input-row">
+            <input type="text" id="qaInput_${{p.id}}" class="search-input" placeholder="输入您对这份保单的任何理赔疑问，按回车提交..." onkeydown="if(event.key==='Enter') sendCustomQa('${{p.id}}')">
+            <button class="btn btn-primary" onclick="sendCustomQa('${{p.id}}')">提问</button>
+          </div>
+          <div id="qaAnswer_${{p.id}}" style="display:none; margin-top:12px;"></div>
+        </div>
+      `;
+    }}
+
+    // 在浏览器中直接调用 DeepSeek API 进行保单精读
+    async function runAiInBrowser(policyId) {{
+      let key = getApiKey();
+      if (!key) {{
+        key = configureApiKey();
+        if (!key) return;
+      }}
+
+      const p = window.BAODAN_DATA.policies.find(x => x.id === policyId);
+      if (!p) return;
+
+      const btn = document.getElementById('btnRunAi_' + policyId);
+      const progress = document.getElementById('aiRunProgress_' + policyId);
+      if (btn) btn.disabled = true;
+      if (progress) progress.style.display = 'block';
+
+      try {{
+        const response = await fetch('https://api.deepseek.com/v1/chat/completions', {{
+          method: 'POST',
+          headers: {{
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + key
+          }},
+          body: JSON.stringify({{
+            model: 'deepseek-chat',
+            messages: [
+              {{
+                role: 'system',
+                content: '你是一位精通中国大陆商业健康险与医疗险条款的资深精算与核保专家。请严格基于保单提供的真实合同约定撰写一份《大模型条款深度研读与理赔指南》。必须覆盖：1.🛡️核心保障利益与阶梯报销标准；2.⚠️免除责任与暗坑排雷（医院等级限制、特需/私立除外、等待期、既往症）；3.🎖️人员身份与必备证明材料清单；4.🎁增值权益兑现通道；5.🎯一句话理赔极简口诀。'
+              }},
+              {{
+                role: 'user',
+                content: `【保单信息】：\\n产品：${{p.product_name}}\\n承保机构：${{p.insurer}}\\n险种分类：${{p.category}}\\n基本保额：${{p.sum_insured_text}}\\n年度保费：${{p.annual_premium_text}}\\n投保人：${{p.policyholder}}\\n被保险人：${{p.insured}} (${{p.relationship}})\\n续期扣款日：${{p.renewal_date}}\\n\\n【合同核心正文与责任摘录】：\\n${{p.raw_body_excerpt}}`
+              }}
+            ],
+            temperature: 0.2,
+            max_tokens: 3500
+          }})
+        }});
+
+        const data = await response.json();
+        if (data.error) {{
+          throw new Error(data.error.message || 'API 调用失败');
+        }}
+
+        const aiText = data.choices[0].message.content;
+        p.ai_section = aiText;
+        p.has_ai_report = true;
+
+        renderDrawerAi(p);
+      }} catch (err) {{
+        alert('❌ 调用 DeepSeek 失败: ' + err.message + '\\n请检查 Key 是否填写正确或网络状态。');
+        if (btn) btn.disabled = false;
+        if (progress) progress.style.display = 'none';
+      }}
+    }}
+
+    // 智能追问
+    async function askQuick(policyId, question) {{
+      let key = getApiKey();
+      if (!key) {{
+        key = configureApiKey();
+        if (!key) return;
+      }}
+
+      const p = window.BAODAN_DATA.policies.find(x => x.id === policyId);
+      if (!p) return;
+
+      const ansArea = document.getElementById('qaAnswer_' + policyId);
+      ansArea.style.display = 'block';
+      ansArea.innerHTML = `
+        <div style="padding:12px; background:var(--bg-surface); border-radius:8px; border:1px solid var(--border-color); color:var(--text-muted); font-size:12px;">
+          <div style="font-weight:700; color:var(--text-main); margin-bottom:6px;">💬 问：${{question}}</div>
+          <div style="color:#10b981; font-weight:600;">⏳ DeepSeek 正在依据保单条款精算赔付金额与检索免责约定，请稍候...</div>
+        </div>
+      `;
+
+      try {{
+        const response = await fetch('https://api.deepseek.com/v1/chat/completions', {{
+          method: 'POST',
+          headers: {{
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + key
+          }},
+          body: JSON.stringify({{
+            model: 'deepseek-chat',
+            messages: [
+              {{
+                role: 'system',
+                content: '你是一位精通中国保险法律与理赔实务的资深精算师。用户正在查阅自己的真实保单，并对具体理赔、免除责任、医院限制或分段报销测算进行追问。必须完全基于保单合同约定解答，涉及金额计算必须给出清晰的分步计算过程，明确提示医保结算与公立普通部红线。'
+              }},
+              {{
+                role: 'user',
+                content: `【保单信息】：${{p.product_name}} (${{p.insurer}})\\n保额：${{p.sum_insured_text}} | 保费：${{p.annual_premium_text}} | 被保人：${{p.insured}} (${{p.relationship}})\\n\\n【保单条款与精读核心上下文】：\\n${{p.ai_section || p.raw_body_excerpt}}\\n\\n【用户追问】：${{question}}`
+              }}
+            ],
+            temperature: 0.2,
+            max_tokens: 1600
+          }})
+        }});
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message || 'API 错误');
+        const answer = data.choices[0].message.content;
+
+        ansArea.innerHTML = `
+          <div style="padding:14px; background:var(--bg-surface); border-radius:8px; border:1px solid var(--border-color); font-size:13px; line-height:1.7;">
+            <div style="font-weight:700; color:var(--text-main); margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border-color);">
+              💬 问：${{question}}
+            </div>
+            <div>${{formatMarkdown(answer)}}</div>
+          </div>
+        `;
+      }} catch (err) {{
+        ansArea.innerHTML = `<div style="color:#ef4444; font-size:12px; padding:10px;">❌ 提问失败: ${{err.message}}</div>`;
+      }}
+    }}
+
+    function sendCustomQa(policyId) {{
+      const input = document.getElementById('qaInput_' + policyId);
+      const q = input.value.trim();
+      if (!q) return;
+      input.value = '';
+      askQuick(policyId, q);
+    }}
+
     function closeDrawer() {{
       document.getElementById('drawerOverlay').classList.remove('open');
       document.getElementById('policyDrawer').classList.remove('open');
@@ -1288,20 +1528,87 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       if (e.key === 'Escape') closeDrawer();
     }});
 
-    // 简单 Markdown 转 HTML
+    // 格式化 Markdown 文本与表格
     function formatMarkdown(md) {{
       if (!md) return '';
-      let html = md;
-      // 表格转换
-      html = html.replace(/\\|(.+?)\\|/g, (match) => match);
-      // 标题
-      html = html.replace(/^### (.*$)/gim, '<h4 style="margin:12px 0 6px 0; color:var(--text-main);">$1</h4>');
-      html = html.replace(/^## (.*$)/gim, '<h3 style="margin:16px 0 8px 0; color:var(--text-main);">$1</h3>');
-      // 粗体
-      html = html.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
-      // 引用块
-      html = html.replace(/^> (.*$)/gim, '<blockquote style="border-left:3px solid var(--accent-primary); padding-left:10px; margin:8px 0; color:var(--text-muted);">$1</blockquote>');
-      return html;
+      // 剥离 Obsidian 专用代码块与旧版提示
+      let text = md.replace(/```baodan-ai[\\s\\S]*?```/g, '').trim();
+      text = text.replace(/>\\s*\\[!TIP\\]\\s*建议使用[\\s\\S]*?点击上方按钮.*?：/g, '').trim();
+
+      const lines = text.split('\\n');
+      let inTable = false;
+      let tableRows = [];
+      let output = [];
+
+      for (let i = 0; i < lines.length; i++) {{
+        let line = lines[i];
+
+        // 识别表格行
+        if (line.trim().startsWith('|') && line.trim().endsWith('|')) {{
+          if (!inTable) {{
+            inTable = true;
+            tableRows = [];
+          }}
+          if (!line.includes('---')) {{
+            const cells = line.split('|').slice(1, -1).map(c => c.trim());
+            tableRows.push(cells);
+          }}
+          continue;
+        }} else if (inTable) {{
+          inTable = false;
+          if (tableRows.length > 0) {{
+            output.push(renderHtmlTable(tableRows));
+          }}
+        }}
+
+        // 标题与段落
+        if (line.startsWith('### ')) {{
+          output.push(`<h4 style="margin:14px 0 6px 0; color:var(--text-main); font-weight:700;">${{formatInline(line.slice(4))}}</h4>`);
+        }} else if (line.startsWith('## ')) {{
+          output.push(`<h3 style="margin:18px 0 8px 0; color:var(--text-main); font-weight:800; border-bottom:1px solid var(--border-color); padding-bottom:4px;">${{formatInline(line.slice(3))}}</h3>`);
+        }} else if (line.startsWith('# ')) {{
+          output.push(`<h2 style="margin:20px 0 10px 0; color:var(--text-main); font-weight:800;">${{formatInline(line.slice(2))}}</h2>`);
+        }} else if (line.startsWith('> [!')) {{
+          const alertTitle = line.replace(/>\\s*\\[!.*?\\]-?\\s*/, '').trim();
+          output.push(`<div style="border-left:3px solid var(--accent-primary); background:rgba(99,102,241,0.06); padding:8px 12px; margin:8px 0; border-radius:4px; font-size:13px; font-weight:600;">${{formatInline(alertTitle)}}</div>`);
+        }} else if (line.startsWith('> ')) {{
+          output.push(`<blockquote style="border-left:3px solid var(--accent-primary); padding-left:10px; margin:6px 0; color:var(--text-muted); font-size:13px;">${{formatInline(line.slice(2))}}</blockquote>`);
+        }} else if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {{
+          output.push(`<li style="margin-left:20px; font-size:13px; line-height:1.6;">${{formatInline(line.trim().slice(2))}}</li>`);
+        }} else if (line.trim().match(/^\\d+\\.\\s+/)) {{
+          output.push(`<li style="margin-left:20px; font-size:13px; line-height:1.6;">${{formatInline(line.trim().replace(/^\\d+\\.\\s+/, ''))}}</li>`);
+        }} else if (line.trim() === '---') {{
+          output.push('<hr style="border:0; border-top:1px dashed var(--border-color); margin:14px 0;">');
+        }} else if (line.trim()) {{
+          output.push(`<p style="margin:6px 0; font-size:13px; line-height:1.7;">${{formatInline(line)}}</p>`);
+        }}
+      }}
+
+      if (inTable && tableRows.length > 0) {{
+        output.push(renderHtmlTable(tableRows));
+      }}
+
+      return output.join('\\n');
+    }}
+
+    function renderHtmlTable(rows) {{
+      if (!rows || rows.length === 0) return '';
+      let tHtml = '<div style="overflow-x:auto; margin:12px 0;"><table style="width:100%; border-collapse:collapse; font-size:12px;">';
+      tHtml += '<thead><tr>' + rows[0].map(c => `<th style="border:1px solid var(--border-color); padding:8px 10px; background:rgba(255,255,255,0.05); text-align:left;">${{formatInline(c)}}</th>`).join('') + '</tr></thead>';
+      tHtml += '<tbody>';
+      for (let r = 1; r < rows.length; r++) {{
+        tHtml += '<tr>' + rows[r].map(c => `<td style="border:1px solid var(--border-color); padding:7px 10px;">${{formatInline(c)}}</td>`).join('') + '</tr>';
+      }}
+      tHtml += '</tbody></table></div>';
+      return tHtml;
+    }}
+
+    function formatInline(str) {{
+      if (!str) return '';
+      return str
+        .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
+        .replace(/\\*(.*?)\\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code style="background:var(--border-color); padding:2px 5px; border-radius:4px; font-size:12px;">$1</code>');
     }}
 
     // 渲染统计大盘
