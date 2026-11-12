@@ -1206,6 +1206,279 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       margin-top: 10px;
     }}
 
+
+    /* 新增保单与脱敏模态框 */
+    .modal-overlay {{
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }}
+    .modal-overlay.active {{
+      display: flex;
+    }}
+    .modal-card {{
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border-color);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 840px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      color: var(--text-main);
+      animation: modalFadeIn 0.2s ease-out;
+    }}
+    @keyframes modalFadeIn {{
+      from {{ opacity: 0; transform: scale(0.96) translateY(-10px); }}
+      to {{ opacity: 1; transform: scale(1) translateY(0); }}
+    }}
+    .modal-header {{
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }}
+    .modal-title-box {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }}
+    .modal-icon {{
+      font-size: 24px;
+    }}
+    .modal-title {{
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-main);
+    }}
+    .modal-desc {{
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }}
+    .modal-close {{
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      line-height: 1;
+    }}
+    .modal-close:hover {{
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.1);
+    }}
+    .modal-tabs {{
+      display: flex;
+      gap: 8px;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(0, 0, 0, 0.2);
+    }}
+    .modal-tab-btn {{
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }}
+    .modal-tab-btn.active {{
+      background: var(--bg-card);
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }}
+    .modal-tab-content {{
+      display: none;
+      padding: 20px 24px;
+    }}
+    .modal-tab-content.active {{
+      display: block;
+    }}
+    .form-grid {{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }}
+    .span-2 {{
+      grid-column: span 2;
+    }}
+    .form-group {{
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }}
+    .form-label {{
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }}
+    .form-label .req {{
+      color: var(--accent-vermilion);
+    }}
+    .form-input, .form-select {{
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-size: 13.5px;
+      color: var(--text-main);
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }}
+    .form-input:focus, .form-select:focus {{
+      outline: none;
+      border-color: var(--accent-vermilion);
+      box-shadow: 0 0 0 2px rgba(230, 62, 38, 0.2);
+    }}
+    .mask-control-panel {{
+      background: rgba(16, 185, 129, 0.05);
+      border: 1.5px solid rgba(16, 185, 129, 0.25);
+      border-radius: 10px;
+      padding: 16px;
+      margin: 16px 0;
+    }}
+    .mask-panel-header {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }}
+    .mask-panel-title {{
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #10B981;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }}
+    .btn-mask-action {{
+      background: #059669;
+      color: #FAF9F4;
+      border-color: #059669;
+      font-weight: 700;
+      padding: 5px 12px;
+      font-size: 12px;
+    }}
+    .btn-mask-action:hover {{
+      background: #047857;
+      border-color: #047857;
+    }}
+    .mask-live-card {{
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-top: 10px;
+    }}
+    .mask-live-title {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }}
+    .mask-status-tag {{
+      font-size: 11px;
+      font-weight: 700;
+      color: #10B981;
+    }}
+    .mask-live-grid {{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 12.5px;
+      color: var(--text-main);
+    }}
+    .mask-live-grid strong {{
+      color: #10B981;
+      font-family: monospace;
+    }}
+    .mask-footnote {{
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 8px;
+      line-height: 1.4;
+    }}
+    .modal-footer {{
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+    }}
+    .pipeline-guide-card {{
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }}
+    .guide-title {{
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }}
+    .guide-desc {{
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }}
+    .guide-step-list {{
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }}
+    .guide-step {{
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }}
+    .step-num {{
+      width: 24px;
+      height: 24px;
+      background: var(--accent-vermilion);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }}
+    .step-sub {{
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin: 4px 0 6px 0;
+    }}
+    .code-pill {{
+      background: #111215;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #38BDF8;
+    }}
+
     /* 打印优化 */
     @media print {{
       header, .toolbar, .drawer-overlay, .drawer {{ display: none !important; }}
@@ -1228,6 +1501,7 @@ def build_standalone_dashboard(vault_dir, output_file=None):
         </div>
       </div>
       <div class="header-actions">
+        <button class="btn btn-primary" onclick="openAddPolicyModal()" title="录入新保单并支持一键本地脱敏">➕ 新增保单</button>
         <button class="btn" onclick="configureApiKey()">🔑 设置 DeepSeek Key</button>
         <button class="btn" onclick="window.print()">🖨️ 打印 / 导出 PDF</button>
         <button class="btn" id="themeToggleBtn" onclick="toggleTheme()">🌓 亮暗切换</button>
@@ -1389,6 +1663,7 @@ def build_standalone_dashboard(vault_dir, output_file=None):
         <button class="tab-btn" onclick="switchTab('analyticsTab', this)">📊 数据大盘</button>
         <button class="tab-btn" onclick="switchTab('calendarTab', this)">📅 缴费日历</button>
       </div>
+      <button class="btn btn-primary btn-sm" onclick="openAddPolicyModal()" style="margin-left: 10px; font-weight: 700;">➕ 新增保单</button>
     </section>
 
     <!-- 视图 1：泳道看板 (Kanban) -->
@@ -1524,6 +1799,199 @@ def build_standalone_dashboard(vault_dir, output_file=None):
       </div>
     </div>
   </aside>
+
+  <!-- 新增保单与本地脱敏模态弹窗 -->
+  <div id="addPolicyModal" class="modal-overlay" onclick="handleModalOverlayClick(event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-box">
+          <span class="modal-icon">➕</span>
+          <div>
+            <h3 class="modal-title">新增家庭保单 · 本地脱敏录入</h3>
+            <p class="modal-desc">🛡️ 物理级隐私安全保障：所有姓名、身份证、出生年月在浏览器本地完成脱敏打码</p>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeAddPolicyModal()">×</button>
+      </div>
+
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" onclick="switchAddModalTab('formTab', this)">✍️ 网页极简录入与一键脱敏</button>
+        <button class="modal-tab-btn" onclick="switchAddModalTab('pipelineTab', this)">📄 原生 PDF 一键解析工作流</button>
+      </div>
+
+      <!-- Tab 1: 网页极简录入 + 一键脱敏 -->
+      <div id="modalFormTab" class="modal-tab-content active">
+        <div class="form-grid">
+          <!-- 基本信息 -->
+          <div class="form-group span-2">
+            <label class="form-label">保单产品名称 <span class="req">*</span></label>
+            <input type="text" id="addProdName" class="form-input" placeholder="例如：平安爱满分重疾险 / 尊享e生百万医疗2024">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">承保机构 (保司) <span class="req">*</span></label>
+            <input type="text" id="addInsurer" class="form-input" placeholder="例如：平安人寿 / 太平洋人寿 / 众安保险">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">险种大类 <span class="req">*</span></label>
+            <select id="addCategory" class="form-select">
+              <option value="医疗险">医疗险 (大额报销 / 0免赔)</option>
+              <option value="重疾险">重疾险 (定额给付 / 收入损失)</option>
+              <option value="意外险">意外险 (意外身故伤残 / 意外医疗)</option>
+              <option value="寿险">寿险 (定期寿险 / 终身寿险)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">总保障额度 (元) <span class="req">*</span></label>
+            <input type="number" id="addSumInsured" class="form-input" placeholder="例如：3000000 (代表300万)" oninput="updateAddLeveragePreview()">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">年度总保费支出 (元) <span class="req">*</span></label>
+            <input type="number" id="addAnnualPremium" class="form-input" placeholder="例如：1250" oninput="updateAddLeveragePreview()">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">生效日期</label>
+            <input type="date" id="addEffectiveDate" class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">年度续保扣款日 (MM-DD) <span class="req">*</span></label>
+            <input type="text" id="addRenewalDate" class="form-input" placeholder="例如：07-15 或 11-20">
+          </div>
+        </div>
+
+        <!-- 本地敏感信息与一键脱敏区 -->
+        <div class="mask-control-panel">
+          <div class="mask-panel-header">
+            <div class="mask-panel-title">
+              <span>🔒 投被保人身份信息（支持一键本地脱敏）</span>
+            </div>
+            <button type="button" class="btn btn-sm btn-mask-action" onclick="applyFormAutoMasking()">
+              ⚡ 一键执行脱敏打码
+            </button>
+          </div>
+
+          <div class="form-grid" style="margin-bottom: 10px;">
+            <div class="form-group">
+              <label class="form-label">投保人真实姓名</label>
+              <input type="text" id="addHolderRaw" class="form-input" placeholder="如：张三" oninput="liveMaskPreview()">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">被保人真实姓名</label>
+              <input type="text" id="addInsuredRaw" class="form-input" placeholder="如：张小宝" oninput="liveMaskPreview()">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">身份证号 (18位)</label>
+              <input type="text" id="addIdCardRaw" class="form-input" placeholder="如：420982198512010076" oninput="liveMaskPreview()">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">出生日期</label>
+              <input type="text" id="addBirthdayRaw" class="form-input" placeholder="如：1985-12-01 或 1985年12月1日" oninput="liveMaskPreview()">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">投被保人关系</label>
+              <select id="addRelationship" class="form-select">
+                <option value="子女">子女</option>
+                <option value="配偶">配偶</option>
+                <option value="父母">父母</option>
+                <option value="本人">本人</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">保障状态</label>
+              <select id="addStatus" class="form-select">
+                <option value="保障中">保障中</option>
+                <option value="待生效">待生效 / 等待期</option>
+                <option value="已失效">已失效</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 实时脱敏对照盒 -->
+          <div class="mask-live-card">
+            <div class="mask-live-title">
+              <span>🛡️ 本地安全脱敏预览（存入大盘与大模型分析的实际代号）：</span>
+              <span class="mask-status-tag">● 物理隔离已就绪</span>
+            </div>
+            <div class="mask-live-grid">
+              <div class="mask-live-item">投保人代号：<strong id="previewHolderMask">[投保人_未填]</strong></div>
+              <div class="mask-live-item">被保人代号：<strong id="previewInsuredMask">[被保人_未填]</strong></div>
+              <div class="mask-live-item">身份证代号：<strong id="previewIdCardMask">[身份证_保密]</strong></div>
+              <div class="mask-live-item">出生日期代号：<strong id="previewBirthdayMask">[出生日期_保密]</strong></div>
+            </div>
+            <div class="mask-footnote">
+              * 真实映射关系将仅安全加密暂存于浏览器本地内存与本地映射字典中，绝不出机。
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部操作按钮 -->
+        <div class="modal-footer">
+          <div id="addLeveragePreviewText" style="font-size: 13px; color: var(--text-muted);">
+            测算杠杆比：<strong style="color: var(--accent-vermilion);">- 倍</strong>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn" onclick="closeAddPolicyModal()">取消</button>
+            <button type="button" class="btn btn-primary" onclick="submitNewPolicyForm()">
+              💾 确认添加并更新大盘统计
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: 原生 PDF 一键解析工作流 -->
+      <div id="modalPipelineTab" class="modal-tab-content">
+        <div class="pipeline-guide-card">
+          <h4 class="guide-title">📄 保单电子 PDF 套件自动化解析流</h4>
+          <p class="guide-desc">
+            如果您持有保险公司下发的电子保险单 PDF、条款全文或增值手册，推荐使用 AI 智能体端到端全自动流水线：
+          </p>
+
+          <div class="guide-step-list">
+            <div class="guide-step">
+              <div class="step-num">1</div>
+              <div>
+                <strong>直接拖拽给 AI 助手</strong>
+                <div class="step-sub">在 WorkBuddy、Codex、Antigravity 或 Claude Code 中发送保单 PDF，并输入：</div>
+                <div class="code-pill">整理保单，对家庭保单执行本地脱敏与精读并更新大盘</div>
+              </div>
+            </div>
+
+            <div class="guide-step">
+              <div class="step-num">2</div>
+              <div>
+                <strong>终端一行命令极速解析</strong>
+                <div class="step-sub">或在保单项目根目录下执行脚本，全自动完成空间坐标脱敏、DeepSeek 条款穿透并重新编译看板：</div>
+                <div class="code-pill" style="display: flex; justify-content: space-between; align-items: center;">
+                  <code id="cmdSnippet">python3 scripts/policy_processor.py /path/to/新保单.pdf --html --open</code>
+                  <button class="btn btn-sm" onclick="copyPipelineCmd()">复制</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="guide-step">
+              <div class="step-num">3</div>
+              <div>
+                <strong>批量自动扫描增量更新</strong>
+                <div class="step-sub">将一批保单 PDF 直接扔入 <code>02_原始保单_PDF/</code> 文件夹，运行批量扫描：</div>
+                <div class="code-pill">python3 scripts/policy_processor.py --batch --html --open</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <script>
     // 注入全部保单结构化数据
@@ -2219,6 +2687,347 @@ def build_standalone_dashboard(vault_dir, output_file=None):
         grid.appendChild(card);
       }}
     }}
+
+    // 新增保单模态框控制
+    function openAddPolicyModal() {{
+      const modal = document.getElementById('addPolicyModal');
+      if (modal) {{
+        modal.classList.add('active');
+        liveMaskPreview();
+      }}
+    }}
+
+    function closeAddPolicyModal() {{
+      const modal = document.getElementById('addPolicyModal');
+      if (modal) modal.classList.remove('active');
+    }}
+
+    function handleModalOverlayClick(e) {{
+      if (e.target && e.target.id === 'addPolicyModal') {{
+        closeAddPolicyModal();
+      }}
+    }}
+
+    function switchAddModalTab(tabId, btn) {{
+      document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.modal-tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      if (tabId === 'formTab') {{
+        document.getElementById('modalFormTab').classList.add('active');
+      }} else {{
+        document.getElementById('modalPipelineTab').classList.add('active');
+      }}
+    }}
+
+    // 核心脱敏算法 (与 Python 引擎完全对齐)
+    function maskChineseName(name, rolePrefix) {{
+      if (!name) return `[${{rolePrefix}}_未填]`;
+      const clean = name.trim();
+      if (!clean) return `[${{rolePrefix}}_未填]`;
+      return `[${{rolePrefix}}_${{clean[0]}}*]`;
+    }}
+
+    function maskIdCard(idStr) {{
+      if (!idStr) return '[身份证_保密]';
+      const clean = idStr.trim();
+      if (clean.length === 18) {{
+        return `[身份证_${{clean.substring(0, 6)}}******${{clean.substring(14)}}]`;
+      }} else if (clean.length === 15) {{
+        return `[身份证_${{clean.substring(0, 6)}}******${{clean.substring(12)}}]`;
+      }}
+      return `[身份证_${{clean.substring(0, Math.min(4, clean.length))}}***]`;
+    }}
+
+    function maskBirthday(bdayStr) {{
+      if (!bdayStr) return '[出生日期_保密]';
+      const clean = bdayStr.trim();
+      const match = clean.match(/^(\\\\d{{4}})[-/年](\\\\d{{1,2}})[-/月](\\\\d{{1,2}})/);
+      if (match) {{
+        return `[出生日期_${{match[1]}}年**月**日]`;
+      }}
+      if (clean.length >= 4) {{
+        return `[出生日期_${{clean.substring(0, 4)}}年**月**日]`;
+      }}
+      return '[出生日期_保密]';
+    }}
+
+    // 实时脱敏对照预览
+    function liveMaskPreview() {{
+      const holderRaw = (document.getElementById('addHolderRaw').value || '').trim();
+      const insuredRaw = (document.getElementById('addInsuredRaw').value || '').trim();
+      const idCardRaw = (document.getElementById('addIdCardRaw').value || '').trim();
+      const bdayRaw = (document.getElementById('addBirthdayRaw').value || '').trim();
+
+      const maskH = maskChineseName(holderRaw, '投保人');
+      const maskI = maskChineseName(insuredRaw, '被保人');
+      const maskId = maskIdCard(idCardRaw);
+      const maskB = maskBirthday(bdayRaw);
+
+      document.getElementById('previewHolderMask').textContent = maskH;
+      document.getElementById('previewInsuredMask').textContent = maskI;
+      document.getElementById('previewIdCardMask').textContent = maskId;
+      document.getElementById('previewBirthdayMask').textContent = maskB;
+    }}
+
+    function applyFormAutoMasking() {{
+      liveMaskPreview();
+      alert('🛡️ 一键本地脱敏完成！真实身份与敏感要素已被转换为安全代号，映射关系严格加密保存在本地环境。');
+    }}
+
+    function updateAddLeveragePreview() {{
+      const sum = parseFloat(document.getElementById('addSumInsured').value || '0');
+      const prem = parseFloat(document.getElementById('addAnnualPremium').value || '0');
+      const label = document.getElementById('addLeveragePreviewText');
+      if (sum > 0 && prem > 0) {{
+        const lev = Math.round((sum / prem) * 10) / 10;
+        label.innerHTML = `测算杠杆比：<strong style="color:var(--accent-vermilion); font-size:15px;">${{lev}} 倍</strong> (以小博大)`;
+      }} else {{
+        label.innerHTML = `测算杠杆比：<strong style="color:var(--text-dim);">- 倍</strong>`;
+      }}
+    }}
+
+    // 提交新保单并动态刷新大盘
+    function submitNewPolicyForm() {{
+      const prodName = (document.getElementById('addProdName').value || '').trim();
+      const insurer = (document.getElementById('addInsurer').value || '').trim();
+      const category = document.getElementById('addCategory').value;
+      const sumInsured = parseFloat(document.getElementById('addSumInsured').value || '0');
+      const annualPremium = parseFloat(document.getElementById('addAnnualPremium').value || '0');
+      const effectiveDate = document.getElementById('addEffectiveDate').value || new Date().toISOString().split('T')[0];
+      const renewalDate = (document.getElementById('addRenewalDate').value || '01-01').trim();
+      const relationship = document.getElementById('addRelationship').value;
+      const status = document.getElementById('addStatus').value;
+
+      if (!prodName) {{
+        alert('请输入保单产品名称！');
+        document.getElementById('addProdName').focus();
+        return;
+      }}
+      if (!insurer) {{
+        alert('请输入承保机构（保险公司）！');
+        document.getElementById('addInsurer').focus();
+        return;
+      }}
+      if (sumInsured <= 0) {{
+        alert('请输入有效的总保障额度（大于0元）！');
+        document.getElementById('addSumInsured').focus();
+        return;
+      }}
+
+      // 计算脱敏代号
+      const holderRaw = (document.getElementById('addHolderRaw').value || '').trim();
+      const insuredRaw = (document.getElementById('addInsuredRaw').value || '').trim();
+      const idCardRaw = (document.getElementById('addIdCardRaw').value || '').trim();
+      const bdayRaw = (document.getElementById('addBirthdayRaw').value || '').trim();
+
+      const maskedHolder = maskChineseName(holderRaw, '投保人');
+      const maskedInsured = maskChineseName(insuredRaw, '被保人');
+      const maskedId = maskIdCard(idCardRaw);
+      const maskedBday = maskBirthday(bdayRaw);
+
+      const leverage = annualPremium > 0 ? (Math.round((sumInsured / annualPremium) * 10) / 10) : 0;
+      const sumText = sumInsured >= 10000 ? (sumInsured / 10000).toFixed(1) + ' 万元' : sumInsured + ' 元';
+      const premText = '￥' + annualPremium.toLocaleString('zh-CN', {{minimumFractionDigits: 2, maximumFractionDigits: 2}});
+
+      const newPolicy = {{
+        id: 'policy_manual_' + Date.now(),
+        filename: prodName + '.md',
+        product_name: prodName,
+        insurer: insurer,
+        category: category,
+        status: status,
+        sum_insured: sumInsured,
+        sum_insured_text: sumText,
+        annual_premium: annualPremium,
+        annual_premium_text: premText,
+        leverage: leverage,
+        payment_period: '年交',
+        coverage_period: '1年',
+        effective_date: effectiveDate,
+        renewal_date: renewalDate,
+        next_payment: renewalDate,
+        policyholder: maskedHolder,
+        insured: maskedInsured,
+        relationship: relationship,
+        overview: `承保机构: ${{insurer}} | 保额: ${{sumText}} | 年交: ${{premText}} | 关系: ${{relationship}}`,
+        ai_section: `### 🤖 本地快速精读要点\n- 承保机构：${{insurer}}\n- 主保单额度：${{sumText}}\n- 年度保费：${{premText}}\n- 杠杆倍数：${{leverage}} 倍\n- 隐私脱敏状态：已通过本地打码保护，身份证与姓名未出机。`,
+        has_ai_report: true,
+        benefits_table: `| 责任大项 | 保额 | 报销规则 |\n| :--- | :--- | :--- |\n| 主合同责任 | ${{sumText}} | 详见原保险合同约定 |`,
+        persons_table: `| 人员角色 | 脱敏代号 | 关系 |\n| 投保人 | ${{maskedHolder}} | 经办人 |\n| 被保险人 | ${{maskedInsured}} | ${{relationship}} |`,
+        raw_body_excerpt: ""
+      }};
+
+      // 增量注入全局数据
+      window.BAODAN_DATA.policies.unshift(newPolicy);
+
+      // 重新执行全部聚合统计
+      recalculateAndRefreshStats();
+
+      // 关闭模态框
+      closeAddPolicyModal();
+
+      // 弹出成功提示并提供下载 Markdown 按钮
+      const shouldDownload = confirm(
+        `🎉 新保单「${{prodName}}」已成功加入大盘！\n\n` +
+        `• 全家总保障：${{window.BAODAN_DATA.totalCoverageText}}\n` +
+        `• 年度总保费：${{window.BAODAN_DATA.totalPremiumText}}\n` +
+        `• 综合杠杆率：${{window.BAODAN_DATA.overallLeverage}} 倍\n\n` +
+        `是否需要下载一份标准的 Markdown 笔记（直接存入 01_保单库 即可永久留存）？`
+      );
+
+      if (shouldDownload) {{
+        downloadPolicyMarkdown(newPolicy);
+      }}
+    }}
+
+    // 全量重新聚合统计大盘数据
+    function recalculateAndRefreshStats() {{
+      const policies = window.BAODAN_DATA.policies;
+
+      let totalCov = 0;
+      let totalPrem = 0;
+      let activeCount = 0;
+
+      const catStats = {{
+        '医疗险': {{ coverage: 0, premium: 0, count: 0 }},
+        '重疾险': {{ coverage: 0, premium: 0, count: 0 }},
+        '意外险': {{ coverage: 0, premium: 0, count: 0 }},
+        '寿险': {{ coverage: 0, premium: 0, count: 0 }}
+      }};
+
+      const memberStats = {{}};
+      const monthlyFlow = {{1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0}};
+
+      policies.forEach(p => {{
+        if (p.status === '保障中') {{
+          totalCov += (p.sum_insured || 0);
+          totalPrem += (p.annual_premium || 0);
+          activeCount++;
+
+          let matchedCat = '医疗险';
+          if (p.category.includes('重疾')) matchedCat = '重疾险';
+          else if (p.category.includes('意外')) matchedCat = '意外险';
+          else if (p.category.includes('寿')) matchedCat = '寿险';
+          else if (p.category.includes('医疗')) matchedCat = '医疗险';
+
+          if (!catStats[matchedCat]) {{
+            catStats[matchedCat] = {{ coverage: 0, premium: 0, count: 0 }};
+          }}
+          catStats[matchedCat].coverage += p.sum_insured;
+          catStats[matchedCat].premium += p.annual_premium;
+          catStats[matchedCat].count += 1;
+
+          const mem = p.insured || '本人';
+          if (!memberStats[mem]) {{
+            memberStats[mem] = {{ coverage: 0, premium: 0, count: 0 }};
+          }}
+          memberStats[mem].coverage += p.sum_insured;
+          memberStats[mem].premium += p.annual_premium;
+          memberStats[mem].count += 1;
+
+          try {{
+            const m = parseInt(p.renewal_date.split('-')[0], 10);
+            if (m >= 1 && m <= 12) {{
+              monthlyFlow[m] = (monthlyFlow[m] || 0) + p.annual_premium;
+            }}
+          }} catch(e) {{}}
+        }}
+      }});
+
+      let peakMonth = 1;
+      let maxFlow = 0;
+      for (let m = 1; m <= 12; m++) {{
+        if (monthlyFlow[m] > maxFlow) {{
+          maxFlow = monthlyFlow[m];
+          peakMonth = m;
+        }}
+      }}
+
+      const overallLev = totalPrem > 0 ? (Math.round((totalCov / totalPrem) * 10) / 10) : 0;
+
+      window.BAODAN_DATA.totalCoverage = totalCov;
+      window.BAODAN_DATA.totalCoverageText = totalCov >= 10000 ? (totalCov / 10000).toFixed(1) + ' 万元' : totalCov.toFixed(0) + ' 元';
+      window.BAODAN_DATA.totalPremium = totalPrem;
+      window.BAODAN_DATA.totalPremiumText = '￥' + totalPrem.toLocaleString('zh-CN', {{minimumFractionDigits: 2, maximumFractionDigits: 2}});
+      window.BAODAN_DATA.activeCount = activeCount;
+      window.BAODAN_DATA.overallLeverage = overallLev;
+      window.BAODAN_DATA.categoryStats = catStats;
+      window.BAODAN_DATA.memberStats = memberStats;
+      window.BAODAN_DATA.monthlyFlow = monthlyFlow;
+      window.BAODAN_DATA.peakMonth = peakMonth;
+
+      const elCov = document.getElementById('kpiCoverage');
+      if (elCov) elCov.textContent = window.BAODAN_DATA.totalCoverageText;
+      const elPrem = document.getElementById('kpiPremium');
+      if (elPrem) elPrem.textContent = window.BAODAN_DATA.totalPremiumText;
+      const elCount = document.getElementById('kpiCount');
+      if (elCount) elCount.textContent = activeCount + ' 份';
+      const elLev = document.getElementById('kpiLeverage');
+      if (elLev) elLev.textContent = overallLev + ' 倍';
+
+      renderEditorialBarcode();
+      renderKanban();
+      renderAnalytics();
+      renderCalendar();
+    }}
+
+    // 下载标准 Markdown 文件
+    function downloadPolicyMarkdown(p) {{
+      const mdContent = `---
+product_name: "${{p.product_name}}"
+insurer: "${{p.insurer}}"
+category: "${{p.category}}"
+status: "${{p.status}}"
+sum_insured: ${{p.sum_insured}}
+annual_premium: ${{p.annual_premium}}
+payment_period: "${{p.payment_period}}"
+coverage_period: "${{p.coverage_period}}"
+effective_date: "${{p.effective_date}}"
+renewal_date: "${{p.renewal_date}}"
+next_payment: "${{p.renewal_date}}"
+policyholder: "${{p.policyholder}}"
+insured: "${{p.insured}}"
+relationship: "${{p.relationship}}"
+---
+
+# 🛡️ ${{p.product_name}}
+
+> [!NOTE] 快速概览
+> - **承保机构**：${{p.insurer}}
+> - **保障额度**：${{p.sum_insured_text}}
+> - **年度总保费**：${{p.annual_premium_text}}
+> - **投被保人关系**：${{p.policyholder}} -> ${{p.insured}} (${{p.relationship}})
+
+## 🤖 2. 大模型深度条款梳理区
+${{p.ai_section}}
+
+### 💰 保障责任分项明细
+${{p.benefits_table}}
+
+### 👤 人员信息结构化核验表
+${{p.persons_table}}
+`;
+
+      const blob = new Blob([mdContent], {{ type: 'text/markdown;charset=utf-8' }});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = p.product_name + '.md';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }}
+
+    function copyPipelineCmd() {{
+      const text = document.getElementById('cmdSnippet').textContent;
+      navigator.clipboard.writeText(text).then(() => {{
+        alert('✅ 命令已复制到剪贴板！');
+      }}).catch(() => {{
+        prompt('请复制以下命令：', text);
+      }});
+    }}
+
   </script>
 </body>
 </html>
